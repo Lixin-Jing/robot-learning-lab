@@ -17,6 +17,7 @@ def main():
     policy.load_state_dict(torch.load("checkpoints/policy.pt", map_location=cfg.device))
     policy.eval()
 
+    done= torch.zeros(1,dtype=bool,device=cfg.device)
     with torch.no_grad():
         gripper = torch.tensor([[-0.75, 0.0]], device=cfg.device)
         object_pos = torch.tensor([[-0.25, 0.0]], device=cfg.device)
@@ -28,18 +29,23 @@ def main():
         for _ in range(cfg.episode_steps):
             obs = make_obs(gripper, object_pos, target)
             action = policy(obs)
+            already_done= done
+            action =torch.where(already_done.unsqueeze(-1),torch.zeros_like(action),action)
             gripper, object_pos, reward, success = env_step(gripper, object_pos, target, action)
+            done=done|success
 
             gripper_path.append(gripper[0].detach().cpu().clone())
             object_path.append(object_pos[0].detach().cpu().clone())
 
         final_distance = torch.linalg.norm(object_pos - target, dim=-1).item()
-        reached_goal = final_distance < 0.07
+        reached_goal = done.item()
+        final_gripper_object_distance = torch.linalg.norm(gripper - object_pos, dim=-1).item()
 
     print("===== Evaluation Result =====")
     print(f"Final object position: x={object_pos[0, 0].item():.3f}, y={object_pos[0, 1].item():.3f}")
     print(f"Target position:       x={target[0, 0].item():.3f}, y={target[0, 1].item():.3f}")
     print(f"Final distance to target: {final_distance:.3f}")
+    print(f"Final gripper-object distance: {final_gripper_object_distance:.3f}")
     print(f"Reached goal: {reached_goal}")
 
 

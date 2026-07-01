@@ -34,6 +34,7 @@ def main():
         log_probs = []
         rewards = []
         successes = []
+        done= torch.zeros(cfg.num_envs,dtype=torch.bool,device=cfg.device)
 
         for _ in range(cfg.episode_steps):
             obs = make_obs(gripper, object_pos, target)
@@ -42,13 +43,20 @@ def main():
             dist = Normal(mean_action, cfg.action_std)
             raw_action = dist.sample()
             action = torch.clamp(raw_action, -cfg.action_limit, cfg.action_limit)
+
+            already_done=done
+            action =torch.where(already_done.unsqueeze(-1), torch.zeros_like(action),action)
+
             log_prob = dist.log_prob(raw_action).sum(dim=-1)
 
             gripper, object_pos, reward, success = env_step(gripper, object_pos, target, action)
 
+            reward =torch.where(already_done,torch.zeros_like(reward),reward)
+            done = done|success
+
             log_probs.append(log_prob)
             rewards.append(reward)
-            successes.append(success.float())
+            successes.append(done.float())
 
         log_probs = torch.stack(log_probs)
         rewards = torch.stack(rewards)
