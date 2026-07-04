@@ -152,3 +152,84 @@ Improve robustness by tuning reward weights, increasing training iterations, and
 
 For long-horizon reinforcement learning tasks, reaching the goal once and staying at the goal are different problems. Early stopping or terminal-state handling is necessary when the environment should stop changing after success.
 
+---
+
+## 2026-07-02 — Multi-Scenario Evaluation
+
+### Goal
+
+Evaluate whether the trained policy can generalize beyond one fixed evaluation scenario.
+
+The previous `Evaluate.py` tested only one fixed initial condition:
+
+```text
+gripper = [-0.75, 0.0]
+object  = [-0.25, 0.0]
+target  = [ 0.75, 0.0]
+```
+
+This was useful for visualizing one trajectory, but it could not show whether the policy was robust across different initial states.
+
+### Change
+
+Added `Evaluate_MultiScenario.py`.
+
+The new evaluation script:
+
+- Loads the trained policy from `checkpoints/policy.pt`.
+- Runs the policy on 100 randomized evaluation scenarios.
+- Uses `reset_env(1)` to generate a new initial gripper, object, and target state for each scenario.
+- Keeps the same `done` mask logic as the single-scenario evaluation, so actions become zero after success.
+- Records the result of each scenario.
+- Saves the evaluation results to `results/evaluation_report.csv`.
+
+Recorded metrics for each scenario:
+
+- `scenario_id`
+- `success`
+- `final_distance_object_target`
+- `final_distance_gripper_object`
+
+### Result
+
+The multi-scenario evaluation ran successfully over 100 randomized scenarios.
+
+Summary:
+
+```text
+Number of scenarios: 100
+Successful scenarios: 19
+Success rate: 19%
+Mean final object-target distance: 0.333
+Median final object-target distance: 0.295
+Worst final object-target distance: 1.031
+Best final object-target distance: 0.015
+```
+
+### Diagnosis
+
+The fixed evaluation scenario can be solved, but the policy does not yet generalize well to randomized initial states.
+
+The low multi-scenario success rate shows that the current policy is not robust enough.
+
+From the evaluation results, many failed scenarios still had a small final gripper-object distance. This suggests that the policy often reaches or stays close to the object, but does not reliably push the object to the target.
+
+Therefore, the main current failure mode is not reaching, but unstable pushing behavior.
+
+### Next Step
+
+Improve the pushing behavior and diagnose failure cases more clearly.
+
+Planned improvements:
+
+- Record the initial gripper, object, and target positions in `evaluation_report.csv`.
+- Save trajectory plots for selected failed scenarios.
+- Analyze whether failures are caused by pushing in the wrong direction, weak pushing, overshooting, or difficult initial states.
+- Tune the pushing reward and object-target reward weights.
+- Retrain the policy and rerun multi-scenario evaluation.
+
+### Lesson Learned
+
+A policy that succeeds in one fixed evaluation scenario may still fail under randomized initial conditions.
+
+Multi-scenario evaluation is necessary to measure generalization and expose hidden failure modes. In this experiment, it showed that the policy had learned basic reaching/contact behavior, but had not yet learned robust pushing.
