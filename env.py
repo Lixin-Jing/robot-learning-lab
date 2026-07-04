@@ -80,8 +80,10 @@ def env_step(
         reward: reward for this step, shape [num_envs]
         success: whether the object reached the target, shape [num_envs]
     """
+    old_gripper = gripper.clone()
+    old_object_pos = object_pos.clone()
     old_dist_to_target = torch.linalg.norm(object_pos - target, dim=-1)
-    old_dist_object_gripper = torch.linalg.norm(gripper-object_pos,dim=-1)
+    old_dist_object_gripper = torch.linalg.norm(gripper - object_pos, dim=-1)
 
     action = torch.clamp(action, -cfg.action_limit, cfg.action_limit)
     gripper = torch.clamp(gripper + action, -1.0, 1.0)
@@ -95,8 +97,38 @@ def env_step(
     new_dist_object_to_target = torch.linalg.norm(object_pos - target, dim=-1)
     new_dist_gripper_object = torch.linalg.norm(gripper - object_pos, dim=-1)
 
+    desired_push_offset = cfg.contact_radius * 0.8
+
+    old_target_direction = target - old_object_pos
+    old_target_direction_norm = torch.linalg.norm(old_target_direction, dim=-1, keepdim=True).clamp_min(1e-6)
+    old_target_direction_unit = old_target_direction / old_target_direction_norm
+    old_desired_push_position = old_object_pos - old_target_direction_unit * desired_push_offset
+
+    new_target_direction = target - object_pos
+    new_target_direction_norm = torch.linalg.norm(new_target_direction, dim=-1, keepdim=True).clamp_min(1e-6)
+    new_target_direction_unit = new_target_direction / new_target_direction_norm
+    new_desired_push_position = object_pos - new_target_direction_unit * desired_push_offset
+
+    old_dist_to_push_position = torch.linalg.norm(old_gripper - old_desired_push_position, dim=-1)
+    new_dist_to_push_position = torch.linalg.norm(gripper - new_desired_push_position, dim=-1)
+    pre_contact = (old_dist_object_gripper > cfg.contact_radius).float()
+    pre_push_positioning_reward = (old_dist_to_push_position - new_dist_to_push_position) * pre_contact * 4.0
+
+    object_movement = object_pos - old_object_pos
+    object_movement_distance = torch.linalg.norm(object_movement, dim=-1)
+
+    target_direction = target - old_object_pos
+    target_direction_norm = torch.linalg.norm(target_direction, dim=-1, keepdim=True).clamp_min(1e-6)
+    object_movement_norm = torch.linalg.norm(object_movement, dim=-1, keepdim=True).clamp_min(1e-6)
+
+    target_direction_unit = target_direction / target_direction_norm
+    object_movement_unit = object_movement / object_movement_norm
+
+    direction_alignment = torch.sum(object_movement_unit * target_direction_unit, dim=-1)
+    directional_pushing_reward = torch.clamp(direction_alignment, min=0.0) * object_movement_distance * 6.0
+
     pushing_reward = (old_dist_to_target - new_dist_object_to_target) * 8.0
-    reaching_reward = (old_dist_object_gripper-new_dist_gripper_object)* 8.0
+    reaching_reward = (old_dist_object_gripper - new_dist_gripper_object) * 8.0
     object_goal_reward = -new_dist_object_to_target
     reach_object_reward = -0.15 * new_dist_gripper_object
     contact_reward = 0.2 * contact.float()
@@ -108,9 +140,11 @@ def env_step(
 
     reward = (
         reaching_reward
+        + pre_push_positioning_reward
         + pushing_reward
+        + directional_pushing_reward
         + object_goal_reward
-        +success_pushing_reward
+        + success_pushing_reward
         + reach_object_reward
         + contact_reward
         + success_reaching_reward
