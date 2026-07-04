@@ -1,0 +1,6 @@
+cat >> .gitignore << 'EOF'
+# Evaluation outputs
+results/failure_cases/
+results/*.png
+results/*.csv
+EOF
