@@ -585,4 +585,324 @@ The current simplified environment makes object movement depend strongly on the 
 
 #### Lesson Learned
 
+
 Evaluation must be reproducible before reward changes can be compared. Fixed-seed multi-scenario evaluation provides a stable benchmark for measuring whether a new reward term actually improves policy performance.
+
+---
+
+## 2026-07-05
+
+### Reward Reweighting Based on Potential-Based Reward Shaping
+
+#### Source
+
+This change was motivated by the reward shaping principle from:
+
+```text
+Ng, A. Y., Harada, D., & Russell, S. (1999).
+Policy Invariance Under Reward Transformations: Theory and Application to Reward Shaping.
+International Conference on Machine Learning (ICML).
+```
+
+The key idea from this paper is that reward shaping should preferably be based on a potential difference between states, rather than continuously rewarding a static intermediate state.
+
+In this project, this motivated the use of progress-based rewards such as:
+
+```python
+old_error - new_error
+```
+
+instead of relying too heavily on state-based rewards such as contact bonuses or static distance penalties.
+
+#### Goal
+
+Reduce reward hacking around intermediate objectives and make the reward structure more aligned with the final pushing objective.
+
+The previous reward design encouraged several useful behaviors, but some intermediate rewards could dominate training:
+
+- staying close to the object
+- staying in contact with the object
+- receiving large reaching/contact rewards even after contact had already been achieved
+
+The intended final objective, however, is not simply to reach or contact the object. The real objective is to push the object to the target.
+
+#### Change
+
+The reward structure was adjusted to make the task more stage-aware:
+
+- Reaching-related rewards mainly apply before contact.
+- Pushing-related rewards mainly apply after contact.
+- Final pushing success receives a larger reward than reaching success.
+- Intermediate contact/reaching rewards were reduced.
+- Directional pushing reward was slightly increased.
+- A y-correction progress reward was added.
+
+The y-correction reward was first implemented as a conservative positive-only progress reward:
+
+```python
+old_y_error = torch.abs(old_object_pos[:, 1] - target[:, 1])
+new_y_error = torch.abs(object_pos[:, 1] - target[:, 1])
+y_correction_progress = old_y_error - new_y_error
+y_correction_reward = torch.clamp(y_correction_progress, min=0.0) * contact.float() * 4.0
+```
+
+After evaluation showed limited improvement, it was changed to a signed progress reward:
+
+```python
+y_correction_reward = y_correction_progress * contact.float() * 4.0
+```
+
+This means:
+
+```text
+object_y moves closer to target_y    -> positive reward
+object_y moves farther from target_y -> negative reward
+object_y does not change             -> zero reward
+```
+
+#### Result
+
+The first reward reweighting improved overall pushing performance:
+
+```text
+Success rate: 15% -> 20%
+Mean final distance: 0.376 -> 0.167
+Median final distance: 0.310 -> 0.132
+Worst final distance: 1.031 -> 0.794
+```
+
+However, large-y-offset failures did not improve:
+
+```text
+Large-y-offset failures: 46 -> 46
+```
+
+Adding y-correction progress reward only slightly improved the overall success rate, but still did not reduce large-y-offset failures.
+
+#### Diagnosis
+
+The policy improved at general pushing and small-y-offset scenarios, but it still failed to solve large-y-offset scenarios.
+
+This suggests that the main bottleneck was not only reward weighting. The policy needed more training exposure to scenarios where object_y was significantly different from target_y.
+
+#### Lesson Learned
+
+Progress-based reward shaping is useful, but reward shaping alone cannot fix poor coverage of difficult initial states. If the policy rarely receives useful learning signals in difficult regions of the state distribution, changing reward weights may not be enough.
+
+---
+
+### Reward Component Logging
+
+#### Goal
+
+Avoid blind reward tuning by measuring the actual scale of each reward component during training.
+
+#### Change
+
+Added reward component debugging in `env.py`.
+
+The environment now periodically logs the mean value of each reward component over the last 100 training iterations:
+
+```text
+action_penalty
+contact_reward
+directional_pushing_reward
+object_goal_reward
+pre_push_positioning_reward
+pushing_reward
+reach_object_reward
+reaching_reward
+success_pushing_reward
+success_reaching_reward
+total_reward
+y_correction_reward
+```
+
+#### Result
+
+The logging showed that:
+
+- `success_pushing_reward` and `pushing_reward` were major positive contributors.
+- `object_goal_reward` was a large negative state-based component before being reduced.
+- `y_correction_reward` had a much smaller magnitude than the main pushing rewards.
+
+Example reward component output:
+
+```text
+pushing_reward: 0.288639
+directional_pushing_reward: 0.199457
+success_pushing_reward: 1.213714
+y_correction_reward: -0.001808
+object_goal_reward: -0.117791
+total_reward: 1.654928
+```
+
+#### Diagnosis
+
+The y-correction reward was too small to dominate learning by itself. This explained why adding y-correction shaping did not significantly improve large-y-offset scenarios.
+
+#### Lesson Learned
+
+Reward terms should not only be logically correct. Their relative scales also matter. Logging reward components makes reward tuning more evidence-based.
+
+---
+
+### Y-Offset Bucket Evaluation
+
+#### Goal
+
+Diagnose whether the policy fails uniformly across all scenarios or whether failures are concentrated in specific initial-state regions.
+
+The previous evaluation reported only aggregate metrics such as overall success rate and total failures. This made it difficult to understand whether the policy failed randomly or systematically.
+
+#### Change
+
+Updated `Evaluate_MultiScenario.py` to classify each scenario by the initial absolute object y-offset:
+
+```text
+abs_y <= 0.05
+0.05 < abs_y <= 0.10
+0.10 < abs_y <= 0.15
+abs_y > 0.15
+```
+
+The evaluation now prints, for each bucket:
+
+- count
+- success rate
+- failures
+- mean final distance
+- median final distance
+
+A new CSV column was also added:
+
+```text
+y_offset_bucket
+```
+
+#### Result
+
+The first bucket evaluation showed a clear difficulty cliff:
+
+```text
+abs_y <= 0.05:
+  success rate: 75.00%
+
+0.05 < abs_y <= 0.10:
+  success rate: 25.00%
+
+0.10 < abs_y <= 0.15:
+  success rate: 5.56%
+
+abs_y > 0.15:
+  success rate: 0.00%
+```
+
+#### Diagnosis
+
+The policy had learned near-horizontal pushing, but had not learned robust 2D target-directed pushing.
+
+The buckets represent different task difficulties:
+
+```text
+small-y-offset  -> mostly 1D pushing
+medium-y-offset -> weak 2D correction
+large-y-offset  -> true 2D target-directed pushing
+```
+
+#### Lesson Learned
+
+Aggregate success rate can hide structured failure modes. Bucketed evaluation provides a clearer picture of what the policy has actually learned.
+
+---
+
+### Targeted Y-Offset Initial-State Sampling
+
+#### Goal
+
+Improve policy learning in medium and large y-offset scenarios by increasing their presence during training.
+
+The bucket evaluation showed that the policy failed mostly when the object started far above or below the target y-position. Instead of continuing to tune reward weights blindly, the training initial-state distribution was adjusted.
+
+#### Change
+
+Updated `reset_env()` in `env.py` to include targeted y-offset sampling.
+
+Added configuration values:
+
+```python
+targeted_y_offset_sampling: bool = True
+targeted_y_offset_fraction: float = 0.5
+targeted_y_offset_min: float = 0.10
+targeted_y_offset_max: float = 0.25
+```
+
+The new sampling rule is:
+
+```text
+50% of environments use normal object_y sampling.
+50% of environments force abs(object_y) to be between 0.10 and 0.25.
+```
+
+#### Result
+
+Targeted sampling significantly improved medium-y-offset performance:
+
+```text
+Overall success rate: 18% -> 29%
+
+0.05 < abs_y <= 0.10:
+  success rate: 25.00% -> 50.00%
+
+0.10 < abs_y <= 0.15:
+  success rate: 5.56% -> 38.89%
+```
+
+However, the hardest bucket remained unsolved:
+
+```text
+abs_y > 0.15:
+  success rate: 0.00%
+```
+
+The final bucket evaluation after targeted sampling was:
+
+```text
+abs_y <= 0.05:
+  count: 16
+  success rate: 75.00%
+  failures: 4
+  mean final distance: 0.068
+  median final distance: 0.049
+
+0.05 < abs_y <= 0.10:
+  count: 20
+  success rate: 50.00%
+  failures: 10
+  mean final distance: 0.128
+  median final distance: 0.086
+
+0.10 < abs_y <= 0.15:
+  count: 18
+  success rate: 38.89%
+  failures: 11
+  mean final distance: 0.166
+  median final distance: 0.114
+
+abs_y > 0.15:
+  count: 46
+  success rate: 0.00%
+  failures: 46
+  mean final distance: 0.228
+  median final distance: 0.159
+```
+
+#### Diagnosis
+
+Targeted initial-state sampling was effective. It moved the policy's capability boundary from around `abs_y = 0.10` to around `abs_y = 0.15`.
+
+However, `abs_y > 0.15` remained too difficult under the current setup. This suggests that future training may need a more gradual curriculum, such as first focusing on `0.10 <= abs_y <= 0.18` before expanding to larger offsets.
+
+#### Lesson Learned
+
+When the policy fails in a specific part of the state distribution, changing the reward alone may not be enough. Adjusting the initial-state distribution can provide more useful learning signals and improve robustness in targeted regions.

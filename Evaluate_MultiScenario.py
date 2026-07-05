@@ -13,6 +13,24 @@ from Policy import Policy
 EVAL_SEED = 0
 LARGE_Y_OFFSET_THRESHOLD = 0.15
 
+Y_OFFSET_BUCKETS = [
+    ("abs_y <= 0.05", 0.0, 0.05),
+    ("0.05 < abs_y <= 0.10", 0.05, 0.10),
+    ("0.10 < abs_y <= 0.15", 0.10, 0.15),
+    ("abs_y > 0.15", 0.15, float("inf")),
+]
+
+
+def get_y_offset_bucket(abs_y):
+    for bucket_name, lower_bound, upper_bound in Y_OFFSET_BUCKETS:
+        if lower_bound == 0.0:
+            if abs_y <= upper_bound:
+                return bucket_name
+        elif lower_bound < abs_y <= upper_bound:
+            return bucket_name
+
+    return "unknown"
+
 
 def save_failure_trajectory_plot(scenario_id, gripper_path, object_path, target):
     os.makedirs("results/failure_cases", exist_ok=True)
@@ -69,11 +87,11 @@ def evaluate_one_scenario(policy, scenario_id):
     final_distance_gripper_object = torch.linalg.norm(gripper - object_pos, dim=-1).item()
 
     saved_failure_plot = ""
-    is_failure = not done.item()
     abs_initial_object_y = abs(initial_object[1].item())
+    y_offset_bucket = get_y_offset_bucket(abs_initial_object_y)
     is_large_y_offset = abs_initial_object_y > LARGE_Y_OFFSET_THRESHOLD
 
-    if is_failure and is_large_y_offset:
+    if not done.item() and is_large_y_offset:
         saved_failure_plot = save_failure_trajectory_plot(
             scenario_id=scenario_id,
             gripper_path=gripper_path,
@@ -89,6 +107,7 @@ def evaluate_one_scenario(policy, scenario_id):
         "initial_object_x": initial_object[0].item(),
         "initial_object_y": initial_object[1].item(),
         "abs_initial_object_y": abs_initial_object_y,
+        "y_offset_bucket": y_offset_bucket,
         "large_y_offset": int(is_large_y_offset),
         "initial_target_x": initial_target[0].item(),
         "initial_target_y": initial_target[1].item(),
@@ -145,6 +164,26 @@ def main():
     print(f"Small-y-offset failures: {small_y_failures}")
     print(f"Saved failure trajectory plots: {len(saved_failure_plots)}")
 
+    print("\nY-offset bucket evaluation:")
+    for bucket_name, _, _ in Y_OFFSET_BUCKETS:
+        bucket_results = [r for r in results if r["y_offset_bucket"] == bucket_name]
+
+        if not bucket_results:
+            print(f"  {bucket_name}:")
+            print("    count: 0")
+            continue
+
+        bucket_successes = [r["success"] for r in bucket_results]
+        bucket_final_distances = [r["final_distance_object_target"] for r in bucket_results]
+        bucket_failures = sum(1 for r in bucket_results if r["success"] == 0)
+
+        print(f"  {bucket_name}:")
+        print(f"    count: {len(bucket_results)}")
+        print(f"    success rate: {np.mean(bucket_successes) * 100:.2f}%")
+        print(f"    failures: {bucket_failures}")
+        print(f"    mean final distance: {np.mean(bucket_final_distances):.3f}")
+        print(f"    median final distance: {np.median(bucket_final_distances):.3f}")
+
     os.makedirs("results", exist_ok=True)
 
     with open("results/evaluation_report.csv", "w", newline="") as f:
@@ -158,6 +197,7 @@ def main():
                 "initial_object_x",
                 "initial_object_y",
                 "abs_initial_object_y",
+                "y_offset_bucket",
                 "large_y_offset",
                 "initial_target_x",
                 "initial_target_y",
