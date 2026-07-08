@@ -87,7 +87,7 @@ gripper[:, 0] = torch.empty(num_envs, device=cfg.device).uniform_(-0.9, -0.6)
 gripper[:, 1] = torch.empty(num_envs, device=cfg.device).uniform_(-0.25, 0.25)
 ```
 
-#### Lesson Learned
+#### Note
 
 For reinforcement learning tasks, reward design alone is not enough. The training distribution and evaluation scenario must also match. A high training success rate may not imply successful evaluation if the policy is tested outside its training distribution.
 
@@ -151,7 +151,7 @@ The final training success rate is still relatively low, around 10%–16%. This 
 
 Improve robustness by tuning reward weights, increasing training iterations, and evaluating across multiple randomized test environments instead of only one fixed scenario.
 
-#### Lesson Learned
+#### Note
 
 For long-horizon reinforcement learning tasks, reaching the goal once and staying at the goal are different problems. Early stopping or terminal-state handling is necessary when the environment should stop changing after success.
 
@@ -231,7 +231,7 @@ Planned improvements:
 - Tune the pushing reward and object-target reward weights.
 - Retrain the policy and rerun multi-scenario evaluation.
 
-#### Lesson Learned
+#### Note
 
 A policy that succeeds in one fixed evaluation scenario may still fail under randomized initial conditions.
 
@@ -276,7 +276,7 @@ It could often push the object when the object and target were nearly horizontal
 
 This suggests that the policy had not learned robust 2D target-directed pushing.
 
-#### Lesson Learned
+#### Note
 
 Final success/failure metrics are not enough for debugging reinforcement learning policies. Logging initial states makes it possible to identify which parts of the state distribution are difficult for the policy.
 
@@ -331,7 +331,7 @@ The main failure mode is not reaching. The policy has learned basic reaching/con
 
 The main failure mode is weak target-directed pushing. The policy can move the object, but after contact it does not reliably choose an action that aligns with the object-to-target direction.
 
-#### Lesson Learned
+#### Note
 
 Visual trajectory debugging is necessary for robot learning tasks. A scalar success rate can say that a policy failed, but trajectory plots show how it failed.
 
@@ -402,7 +402,7 @@ Direction-aware reward helped, but it was not sufficient by itself.
 
 The reward only evaluates the direction of object movement after the object has already moved. It does not directly teach the gripper where it should contact the object before pushing.
 
-#### Lesson Learned
+#### Note
 
 Distance-based reward theoretically contains direction information, but in practice it may be too weak or indirect. Direction-aware reward provides a more explicit signal, but pushing also depends on contact position and post-contact action direction.
 
@@ -491,7 +491,7 @@ Visual inspection showed that the policy still often failed after contact. The o
 
 A likely reason is that this simplified environment does not model realistic contact geometry. In the current environment, once the gripper is in contact with the object, the object movement is mainly determined by the action direction. Therefore, where the gripper stands before contact may be less important than the action direction after contact.
 
-#### Lesson Learned
+#### Note
 
 A reward term should match the environment dynamics. Pre-push positioning is important in real physical pushing, but in this simplified environment the post-contact action direction is more directly responsible for object movement.
 
@@ -583,7 +583,7 @@ The next likely improvement is to directly reward post-contact action alignment.
 
 The current simplified environment makes object movement depend strongly on the action direction after contact. Therefore, a future `contact_action_alignment_reward` may be more effective than adding more pre-contact shaping.
 
-#### Lesson Learned
+#### Note
 
 
 Evaluation must be reproducible before reward changes can be compared. Fixed-seed multi-scenario evaluation provides a stable benchmark for measuring whether a new reward term actually improves policy performance.
@@ -685,7 +685,7 @@ The policy improved at general pushing and small-y-offset scenarios, but it stil
 
 This suggests that the main bottleneck was not only reward weighting. The policy needed more training exposure to scenarios where object_y was significantly different from target_y.
 
-#### Lesson Learned
+#### Note
 
 Progress-based reward shaping is useful, but reward shaping alone cannot fix poor coverage of difficult initial states. If the policy rarely receives useful learning signals in difficult regions of the state distribution, changing reward weights may not be enough.
 
@@ -741,7 +741,7 @@ total_reward: 1.654928
 
 The y-correction reward was too small to dominate learning by itself. This explained why adding y-correction shaping did not significantly improve large-y-offset scenarios.
 
-#### Lesson Learned
+#### Note
 
 Reward terms should not only be logically correct. Their relative scales also matter. Logging reward components makes reward tuning more evidence-based.
 
@@ -810,7 +810,7 @@ medium-y-offset -> weak 2D correction
 large-y-offset  -> true 2D target-directed pushing
 ```
 
-#### Lesson Learned
+#### Note
 
 Aggregate success rate can hide structured failure modes. Bucketed evaluation provides a clearer picture of what the policy has actually learned.
 
@@ -903,6 +903,157 @@ Targeted initial-state sampling was effective. It moved the policy's capability 
 
 However, `abs_y > 0.15` remained too difficult under the current setup. This suggests that future training may need a more gradual curriculum, such as first focusing on `0.10 <= abs_y <= 0.18` before expanding to larger offsets.
 
-#### Lesson Learned
+#### Note
 
-When the policy fails in a specific part of the state distribution, changing the reward alone may not be enough. Adjusting the initial-state distribution can provide more useful learning signals and improve robustness in targeted regions.
+
+---
+
+## 2026-07-08
+
+### Targeted Y-Offset Sampling Range Ablation
+
+#### Source
+
+This ablation was motivated by curriculum learning, prioritized sampling, and domain randomization ideas in reinforcement learning.
+
+Relevant references:
+
+```text
+Florensa, C., Held, D., Wulfmeier, M., Zhang, M., & Abbeel, P. (2017).
+Reverse Curriculum Generation for Reinforcement Learning.
+Conference on Robot Learning (CoRL).
+```
+
+```text
+Jiang, M., Grefenstette, E., & Rocktäschel, T. (2021).
+Prioritized Level Replay.
+International Conference on Machine Learning (ICML).
+```
+
+```text
+Mozifian, M., Gamboa Higuera, J. C., Meger, D., & Dudek, G. (2019).
+Learning Domain Randomization Distributions for Training Robust Locomotion Policies.
+arXiv:1906.00410.
+```
+
+The common idea behind these references is that the training distribution matters. A useful curriculum should not only make the task easier; it should expose the policy to states that have learning potential and that are relevant to the target evaluation distribution.
+
+#### Goal
+
+Test whether a narrower and milder targeted y-offset sampling range would improve learning near the current capability boundary.
+
+The previous targeted sampling configuration was:
+
+```python
+targeted_y_offset_min: float = 0.10
+targeted_y_offset_max: float = 0.25
+```
+
+This improved medium-y-offset performance, but the hardest bucket remained unsolved:
+
+```text
+abs_y > 0.15:
+  success rate: 0.00%
+```
+
+A reasonable hypothesis was that `[0.10, 0.25]` might be too broad and too difficult. Therefore, a narrower curriculum range was tested.
+
+#### Change
+
+Changed the targeted y-offset sampling range from:
+
+```python
+targeted_y_offset_min: float = 0.10
+targeted_y_offset_max: float = 0.25
+```
+
+to:
+
+```python
+targeted_y_offset_min: float = 0.10
+targeted_y_offset_max: float = 0.18
+```
+
+The goal was to focus training on the current medium-hard region instead of exposing the policy to the full large-y-offset range.
+
+#### Result
+
+The narrower range did not improve performance.
+
+Previous result with `[0.10, 0.25]`:
+
+```text
+abs_y <= 0.05:
+  success rate: 75.00%
+
+0.05 < abs_y <= 0.10:
+  success rate: 50.00%
+
+0.10 < abs_y <= 0.15:
+  success rate: 38.89%
+
+abs_y > 0.15:
+  success rate: 0.00%
+```
+
+New result with `[0.10, 0.18]`:
+
+```text
+abs_y <= 0.05:
+  count: 16
+  success rate: 81.25%
+  failures: 3
+  mean final distance: 0.067
+  median final distance: 0.052
+
+0.05 < abs_y <= 0.10:
+  count: 20
+  success rate: 50.00%
+  failures: 10
+  mean final distance: 0.128
+  median final distance: 0.089
+
+0.10 < abs_y <= 0.15:
+  count: 18
+  success rate: 11.11%
+  failures: 16
+  mean final distance: 0.172
+  median final distance: 0.131
+
+abs_y > 0.15:
+  count: 46
+  success rate: 0.00%
+  failures: 46
+  mean final distance: 0.239
+  median final distance: 0.175
+```
+
+The most important regression was:
+
+```text
+0.10 < abs_y <= 0.15:
+  38.89% -> 11.11%
+```
+
+#### Diagnosis
+
+The hypothesis that a milder range would improve curriculum learning was not supported.
+
+The broader range `[0.10, 0.25]` appears to provide more useful y-direction correction experience. Although the highest-offset cases are difficult and still not solved, they may force the policy to learn stronger corrective y-actions. Narrowing the range to `[0.10, 0.18]` reduced exposure to more extreme y-offset states and weakened the learned y-correction behavior.
+
+This suggests that the targeted sampling range is not simply "easier is better". The policy needs enough exposure to challenging y-offset states to learn clear directional correction.
+
+#### Conclusion
+
+The best current v0.2 targeted sampling setting is still:
+
+```python
+targeted_y_offset_min: float = 0.10
+targeted_y_offset_max: float = 0.25
+```
+
+The `[0.10, 0.18]` experiment is useful as an ablation result, but it should not replace the broader range.
+
+#### Note
+
+A curriculum should not only reduce difficulty. It should also preserve useful diversity and expose the agent to states with learning potential. In this project, broader y-offset exposure produced better medium-y generalization than a narrower and milder curriculum range.
