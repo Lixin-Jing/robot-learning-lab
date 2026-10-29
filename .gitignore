@@ -10,3 +10,6 @@ venv/
 .env
 .env.*
 !.env.example
+
+# Keep the README local
+/README.md
