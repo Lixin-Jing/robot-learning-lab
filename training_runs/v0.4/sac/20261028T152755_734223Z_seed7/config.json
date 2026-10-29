@@ -1,0 +1,69 @@
+{
+  "algorithm": "SAC",
+  "implementation": "stable-baselines3",
+  "requested_timesteps": 20480,
+  "hyperparameters": {
+    "learning_rate": 0.0003,
+    "gamma": 0.97,
+    "policy_kwargs": {
+      "net_arch": [
+        64,
+        64
+      ],
+      "activation_fn": "ReLU"
+    },
+    "seed": 7,
+    "device": "cpu",
+    "verbose": 0,
+    "buffer_size": 100000,
+    "learning_starts": 1000,
+    "batch_size": 128,
+    "tau": 0.005,
+    "train_freq": 1,
+    "gradient_steps": 1,
+    "ent_coef": "auto",
+    "target_entropy": "auto"
+  },
+  "environment_config": {
+    "num_envs": 256,
+    "episode_steps": 35,
+    "train_iterations": 1000,
+    "learning_rate": 0.0003,
+    "gamma": 0.97,
+    "action_std": 0.05,
+    "action_limit": 0.08,
+    "contact_radius": 0.2,
+    "device": "cpu",
+    "reward_debug_enabled": false,
+    "reward_debug_interval_iterations": 100,
+    "targeted_y_offset_sampling": true,
+    "targeted_y_offset_fraction": 0.5,
+    "targeted_y_offset_min": 0.1,
+    "targeted_y_offset_max": 0.25
+  },
+  "normalized_action_range": [
+    -1,
+    1
+  ],
+  "physical_action_range": [
+    -0.08,
+    0.08
+  ],
+  "torch_threads": 1,
+  "evaluation": {
+    "episodes": 100,
+    "first_seed": 10000
+  },
+  "versions": {
+    "torch": "2.10.0",
+    "numpy": "2.4.6",
+    "gymnasium": "1.2.3",
+    "stable-baselines3": "2.9.0"
+  },
+  "source_sha256": {
+    "env.py": "414ff96047e15d695729fae2ce6e0c008072fce1f9bf672f553352450397d32a",
+    "gym_env.py": "d559ff52366b6ca08ab876a7f6e8aa7387f09d06eae2e864d456ee1b7273a7ff",
+    "baseline_training.py": "45c7f62b3678bd8300eac78bc4038ab9207eda802acb7d0b997a35bcf3d3e3e8",
+    "train_sac.py": "c200558c59e58915131c3bcefea496ba15956dee8b71e8d0c3c52c410d4be6cb"
+  }
+}

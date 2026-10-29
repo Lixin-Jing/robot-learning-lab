@@ -1,0 +1,94 @@
+{
+  "stage": "v0.3",
+  "generated_at_utc": "2026-10-28T15:04:59.890475+00:00",
+  "python": "3.11.15 (main, Jun 11 2026, 15:14:57) [Clang 20.1.8 ]",
+  "device": "cpu",
+  "versions": {
+    "numpy": "2.4.6",
+    "torch": "2.10.0",
+    "gymnasium": "1.2.3",
+    "stable-baselines3": "2.9.0"
+  },
+  "config": {
+    "num_envs": 256,
+    "episode_steps": 35,
+    "train_iterations": 1000,
+    "learning_rate": 0.0003,
+    "gamma": 0.97,
+    "action_std": 0.05,
+    "action_limit": 0.08,
+    "contact_radius": 0.2,
+    "device": "cpu",
+    "reward_debug_enabled": true,
+    "reward_debug_interval_iterations": 100,
+    "targeted_y_offset_sampling": true,
+    "targeted_y_offset_fraction": 0.5,
+    "targeted_y_offset_min": 0.1,
+    "targeted_y_offset_max": 0.25
+  },
+  "source_sha256": {
+    "gym_env.py": "d559ff52366b6ca08ab876a7f6e8aa7387f09d06eae2e864d456ee1b7273a7ff",
+    "env.py": "414ff96047e15d695729fae2ce6e0c008072fce1f9bf672f553352450397d32a",
+    "Policy.py": "08eaf5a83f2f63fc524aef0f0234f0b64d3065811a8fdae36be0e5a532b15fc5",
+    "test_gym_env.py": "ea587d1f08c98d55b8e522cb0d21824396ea27b5d3748fccd425e5fd963efab7",
+    "validate_v03.py": "c798e9868f6c6f1aaad446ee94bde13e0c32a4ee5966ae600a9247362708198c"
+  },
+  "training_performed": false,
+  "reward_debug_temporarily_disabled_for_validation": true,
+  "behavior_tests": {
+    "passed": true,
+    "tests_run": 30,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "gymnasium_checker": {
+    "passed": true,
+    "warnings": []
+  },
+  "sb3_checker_physical_actions": {
+    "passed": true,
+    "warnings": [
+      "We recommend you to use a symmetric and normalized Box action space (range=[-1, 1]) cf. https://stable-baselines3.readthedocs.io/en/master/guide/rl_tips.html"
+    ]
+  },
+  "sb3_checker_normalized_actions": {
+    "passed": true,
+    "warnings": []
+  },
+  "sb3_vectorization": {
+    "passed": true,
+    "warnings": []
+  },
+  "legacy_checkpoint_parity": {
+    "passed": true,
+    "scenarios": 201,
+    "evaluation_seed": 0,
+    "absolute_tolerance": 1e-06,
+    "checkpoint": "/Users/jing/Local_Project/Robot_learning/checkpoints/policy.pt",
+    "checkpoint_sha256": "5c50604612318999dce89c719155f8f5a27cf299bb8139cfe3890c25e5e57c83",
+    "max_observation_delta": 0.0,
+    "max_reward_delta": 0.0,
+    "max_action_delta": 0.0,
+    "max_padded_legacy_final_state_delta": 0.0,
+    "distributions": {
+      "canonical": {
+        "count": 1,
+        "success_count": 1,
+        "success_rate": 1.0
+      },
+      "legacy_uniform": {
+        "count": 100,
+        "success_count": 29,
+        "success_rate": 0.29
+      },
+      "gym_mixture": {
+        "count": 100,
+        "success_count": 23,
+        "success_rate": 0.23
+      }
+    },
+    "interpretation": "Adapter equivalence on aligned states, not an algorithm benchmark or evidence of improved success rate. Returns stop at first success or timeout; padded success rewards are excluded."
+  },
+  "passed": true
+}

@@ -1,6 +1,12 @@
-cat >> .gitignore << 'EOF'
-# Evaluation outputs
-results/failure_cases/
-results/*.png
-results/*.csv
-EOF
+# Local editor settings and generated Python files
+.idea/
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# Local environments and credentials
+.venv/
+venv/
+.env
+.env.*
+!.env.example

@@ -1,0 +1,26 @@
+{
+  "algorithm": "PPO",
+  "implementation": "stable-baselines3",
+  "training_seed": 7,
+  "actual_timesteps": 8960,
+  "num_envs": 256,
+  "rollout_size": 8960,
+  "training_seconds": 4.209221250377595,
+  "sb3_update_counter": 10,
+  "optimizer_steps": 1400,
+  "parameters_changed": true,
+  "saved_model_reload_verified": true,
+  "evaluation": {
+    "episodes": 5,
+    "first_seed": 10000,
+    "distribution": "Current Gymnasium reset mixture: 50% targeted branch, 50% uniform branch.",
+    "deterministic_actions": true,
+    "success_count": 0,
+    "success_rate": 0.0,
+    "mean_final_distance": 0.8796427607536316,
+    "median_final_distance": 0.8898043036460876,
+    "mean_episode_return": -6.054686855524778,
+    "mean_episode_length": 35.0
+  },
+  "interpretation": "One run with fixed hyperparameters; no multi-seed comparison or tuning. PPO's SB3 update counter counts epochs; optimizer_steps counts minibatch Adam steps."
+}

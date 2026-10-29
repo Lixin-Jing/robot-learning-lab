@@ -1057,3 +1057,390 @@ The `[0.10, 0.18]` experiment is useful as an ablation result, but it should not
 #### Note
 
 A curriculum should not only reduce difficulty. It should also preserve useful diversity and expose the agent to states with learning potential. In this project, broader y-offset exposure produced better medium-y generalization than a narrower and milder curriculum range.
+
+
+---
+
+## 2026-07-15
+
+### Gymnasium Interface Added and Fully Tested
+
+#### Goal
+
+Convert the existing script-style pushing environment into a standard Gymnasium environment so that PPO and SAC can interact with the task through the same interface.
+
+#### Change
+
+Added `gym_env.py` to wrap the existing environment logic.
+
+The wrapper provides:
+
+- A 6-dimensional observation containing the gripper, object, and target positions.
+- A 2-dimensional continuous action representing the gripper displacement.
+- Standard `reset()` and `step()` methods.
+- Separate signals for task success and the episode time limit.
+
+The observation bounds were changed to `[-1, 1]` after testing showed that valid vertical actions could move the gripper beyond the originally declared y-range of `[-0.5, 0.5]`.
+
+Initial-state sampling was also changed to use each environment's own random-number generator. Resetting one environment therefore no longer changes another environment's sampling sequence.
+
+Motion, contact, rewards, success conditions, time limits, and random-state independence were checked during environment development. Invalid action shapes and non-finite actions are rejected before updating the environment.
+
+#### Result
+
+All 30 behavioral checks passed. The environment also passed the Gymnasium and Stable-Baselines3 interface checks, including operation with two environments and automatic resets after the time limit.
+
+The existing policy was evaluated through both the original environment functions and the Gymnasium wrapper using identical initial coordinates.
+
+```text
+Aligned scenarios: 201
+Maximum action difference: 0
+Maximum observation difference: 0
+Maximum per-step reward difference: 0
+Success decisions: identical
+```
+
+The scenarios included one fixed horizontal case, 100 ordinary uniform-sampling cases, and 100 mixed targeted-sampling cases. Their success counts were 1, 29, and 23, respectively.
+
+#### Diagnosis
+
+The interface conversion preserved the existing task behavior. Matching actions, trajectories, and rewards showed that the wrapper did not change how the policy interacted with the environment in the tested scenarios.
+
+The sampling distributions required separate attention. The original single-environment reset used `int(1 * 0.5)=0` targeted samples, whereas the wrapper selects the targeted branch with a probability of 0.5. The two reset methods therefore do not produce the same evaluation distribution. Explicit initial coordinates were used for the migration comparison.
+
+Task success is treated as termination, while reaching the 35-step sampling limit is treated as truncation. This distinction allows later value-based updates to bootstrap at a time limit without bootstrapping after task completion.
+
+#### Note
+
+Passing an interface checker alone does not establish that an environment behaves correctly. Controlled action checks and comparisons against the original implementation are needed to check the transition logic, reward behavior, and episode endings.
+
+---
+
+## 2026-08-08
+
+### PPO Added with Initial Training Results
+
+#### Goal
+
+Introduce a standard PPO baseline and observe whether it can learn the existing reaching-and-pushing task under an initial fixed training budget.
+
+#### Change
+
+Added PPO training through Stable-Baselines3 using the Gymnasium environment.
+
+The policy outputs normalized actions in `[-1, 1]`, which are converted to the gripper displacement range `[-0.08, 0.08]`. The existing transition rules and reward function were retained.
+
+The policy uses two hidden layers with 64 units each, a learning rate of `3e-4`, and a discount factor of `0.97`.
+
+The initial PPO settings were:
+
+- 256-step rollouts.
+- Batch size 64.
+- 10 update epochs.
+- GAE lambda 0.95.
+- Clipping range 0.2.
+
+The initial PPO run used one environment, seed 7, and 20,480 environment interactions. The final policy was then evaluated deterministically on 100 initial states.
+
+#### Result
+
+```text
+successful scenarios: 0 / 100
+success rate: 0%
+mean final object-target distance: 0.554076
+mean episode return: 4.844446
+mean episode length: 35.00
+```
+
+The model changed during training. Evaluation used the saved and reloaded final policy.
+
+#### Diagnosis
+
+Under this initial configuration and budget, PPO did not complete any of the evaluated scenarios.
+
+The mean episode length remained at the 35-step limit, showing that evaluation episodes ended by timeout. The positive mean return also shows that receiving intermediate rewards did not necessarily lead to completing the pushing task.
+
+These aggregate metrics do not identify PPO's specific failure behavior. Determining whether the policy fails during reaching, contact, or target-directed pushing requires inspecting its trajectories.
+
+#### Note
+
+Reward and task success should be evaluated separately. A policy can obtain positive shaped rewards without reaching the goal. This result comes from one training seed and does not establish that PPO consistently fails across repeated runs or other configurations.
+
+---
+
+## 2026-08-27
+
+### SAC Added with Initial Training Results
+
+#### Goal
+
+Introduce a standard SAC baseline and observe whether it can learn the existing reaching-and-pushing task under the same initial training budget used for PPO.
+
+#### Change
+
+Added SAC training through Stable-Baselines3 using the Gymnasium environment.
+
+The policy outputs normalized actions in `[-1, 1]`, which are converted to the gripper displacement range `[-0.08, 0.08]`. The existing transition rules and reward function were retained.
+
+The policy uses two hidden layers with 64 units each, a learning rate of `3e-4`, and a discount factor of `0.97`.
+
+The initial SAC settings were:
+
+- 1,000 initial random-action steps.
+- Batch size 128.
+- One gradient update per subsequent interaction.
+- Automatic entropy-coefficient adjustment.
+
+SAC was trained once using seed 7 and 20,480 environment interactions. The final policy was then evaluated deterministically on the same 100 initial states used for PPO.
+
+#### Result
+
+```text
+successful scenarios: 100 / 100
+success rate: 100%
+mean final object-target distance: 0.045325
+mean episode return: 27.411743
+mean episode length: 17.99
+```
+
+The model changed during training. Evaluation used the saved and reloaded final policy.
+
+#### Diagnosis
+
+Under this initial configuration and budget, SAC learned a policy that completed all evaluated scenarios.
+
+The policy reached the target in about 18 steps on average. Its smaller final object-target distance and successful episode endings indicate that it learned task-completing behavior on this evaluation set.
+
+Using the same initial states as PPO makes these observed outcomes easier to compare. However, one training seed does not establish that SAC is consistently better across repeated runs or explain the cause of the difference between the algorithms.
+
+#### Note
+
+A successful initial run is useful evidence that the algorithm can learn the current task, but repeated training runs are still needed before drawing conclusions about stability or general performance.
+
+
+---
+
+## 2026-10-28
+
+### PPO Failure Trajectory Diagnosis
+
+#### Goal
+
+Identify where the initial PPO policy fails: reaching the object, maintaining contact, or pushing toward the target.
+
+The previous evaluation showed 0% success, but its aggregate metrics did not explain the policy's behavior.
+
+#### Change
+
+Replayed the saved PPO policy on the same 100 initial states used in its original evaluation, without retraining or changing the task.
+
+Recorded the gripper and object trajectories, policy actions, first contact, contact duration, object-target distance, y-error, and each reward component at every step.
+
+Contact was measured at the same instant as the environment's transition rule: after moving the gripper and before moving the object. The replayed returns, final distances, episode lengths, and success decisions matched the original evaluation.
+
+#### Result
+
+```text
+Evaluated scenarios: 100
+Successful scenarios: 0
+Episodes ending at the time limit: 100
+Scenarios with contact: 100
+Scenarios with object movement: 100
+Mean first contact step: 4.52
+Mean contact steps per episode: 31.05 / 35
+
+Mean object-target distance:
+  initial: 1.009478
+  final: 0.554076
+
+Mean absolute object y-error:
+  initial: 0.143470
+  final: 0.351042
+
+Scenarios with increased absolute y-error: 83 / 100
+Scenarios moving farther from the target over the last five steps: 85 / 100
+```
+
+All scenarios made contact within steps 2–7. Even the 9 scenarios with initial absolute object y-offset at most 0.05 failed.
+
+A near-horizontal example started with object y=0.008918, made contact at step 7, and ended with object y=-0.331746 and object-target distance 0.527752.
+
+A negative-y example started at object y=-0.167644, made contact at step 3, and ended at y=-0.888843 with final distance 0.984388.
+
+#### Diagnosis
+
+The main bottleneck is not reaching. Every scenario reached the object and moved it, with contact present for most of the episode.
+
+The failure occurs during target-directed pushing. The policy initially pushes rightward and reduces the target distance, but then tends to push downward and slow down before reaching the goal. Of the 100 scenarios, 91 ended below the target's y-coordinate. All 45 scenarios that started below the target increased their absolute y-error.
+
+The late trajectory is consistent with stagnation away from the goal. By step 35, the mean normalized x-action was about 0.00095. Mean object movement over the last five steps totaled only 0.004586, while the object remained about 0.554 from the target. This differs from a policy that is still making substantial goal-directed progress when its time limit expires.
+
+Positive return did not come only from reaching or contact rewards. Mean episode contributions included:
+
+```text
+pushing_reward: 5.464823
+directional_pushing_reward: 4.054170
+reaching_reward: 1.417756
+y_correction_reward: -0.830290
+object_goal_reward: -6.602733
+success_pushing_reward: 0.000000
+```
+
+The policy receives shaping rewards for its earlier progress but never earns the final success bonus. The negative y-correction contribution confirms that moving away from the target y-coordinate is already penalized; these observations alone do not establish that changing its weight would solve the problem.
+
+The deterministic mean action was clipped in 24.37% of evaluation steps, mainly during the early rightward motion. This is a recorded characteristic of the current policy, not proof that clipping caused the failure.
+
+#### Note
+
+Trajectory diagnosis localizes the observed failure to directional control and late-stage goal convergence. It does not yet identify whether training budget, exploration, optimization settings, or reward balance caused that behavior. Those hypotheses require separate controlled interventions. The saved policy and its parameters were preserved throughout diagnosis.
+
+
+---
+
+## 2026-09-16
+
+### PPO Sampling Extended to 256 Environments
+
+#### Goal
+
+Collect PPO training experience from 256 independent environments, matching the environment count used by the original policy-gradient training loop.
+
+#### Change
+
+Changed PPO from one environment to 256 environments. Each environment maintains its own state and reset random-number generator, while the same policy produces a batch of actions for all environments.
+
+The default collection length remains 256 steps per environment. One rollout therefore contains:
+
+```text
+256 environments × 256 steps = 65,536 transitions
+```
+
+The total training budget counts transitions across all environments. Explicit budgets must contain a whole number of rollouts; incompatible budgets are rejected rather than silently exceeded. The environment count and per-environment rollout length can be set independently.
+
+The sampling backend batches policy computation and steps the lightweight environments sequentially within one process. SAC retains its previous single-environment configuration.
+
+#### Result
+
+The 256 environments produced distinct initial states, reproduced them under repeated seeding, and correctly reset after the episode time limit.
+
+A short training run used 35 collection steps per environment:
+
+```text
+Environments: 256
+Steps per environment: 35
+Total transitions: 8,960
+Rollout batches: 1
+Optimization epochs: 10
+Minibatch optimizer steps: 1,400
+```
+
+The model parameters changed, and saving and reloading reproduced the trained parameters. The short run evaluated 5 scenarios and completed none; this was an implementation check after one rollout, not a replacement for the earlier 100-scenario experiment.
+
+#### Diagnosis
+
+The environment count controls how many trajectories are collected together. It does not, by itself, determine the total amount of training. Increasing it also increases the samples in a rollout when the per-environment collection length is held fixed.
+
+The previous 20,480-step single-environment result remains a historical baseline. No improvement in PPO performance is claimed from this short run.
+
+#### Note
+
+Environment count, rollout length, total interactions, and optimizer steps describe different quantities. They should be stated separately when comparing training runs.
+
+
+### PPO Training with 256 Environments
+
+#### Goal
+
+Determine whether PPO can learn successful pushing with the expanded training configuration after the earlier policy reached and moved the object but failed to converge to the target. Compare the results before and after increasing the interaction budget, and explain what the observed improvement does and does not establish.
+
+#### Change
+
+Trained a new PPO policy from initialization with seed 7. The environment count increased from 1 to 256, while collection length remained 256 steps per environment. The total interaction budget increased from 20,480 to 655,360 transitions.
+
+One interaction means one environment executing an action and returning its reward and next observation. A batched step across 256 environments therefore contributes 256 transitions. Reusing collected experience for another optimization epoch does not add interactions.
+
+```text
+Earlier PPO:
+  1 environment × 256 steps × 80 rollouts = 20,480 transitions
+
+Current PPO:
+  256 environments × 256 steps × 10 rollouts = 655,360 transitions
+```
+
+The reward function, environment dynamics, policy architecture, learning rate, minibatch size, and optimization epochs per rollout were unchanged. With minibatch size 64 and 10 epochs per rollout, the larger dataset also increased the total number of minibatch optimizer steps.
+
+Evaluated the final saved policy with deterministic actions on the same 100 scenarios as the earlier PPO evaluation. All six stored initial coordinates and the evaluation seeds were checked and matched exactly. No checkpoint selection used these scenarios.
+
+#### Result
+
+```text
+                                   Earlier PPO       Current PPO
+Training environments:                       1               256
+Collection steps per environment:          256               256
+Transitions per rollout:                   256            65,536
+Rollout batches:                            80                10
+Total transitions:                      20,480           655,360
+Minibatch size:                              64                64
+Optimization epochs per rollout:            10                10
+Minibatch optimizer steps:               3,200           102,400
+Training time (seconds):                 14.59            279.94
+
+Evaluation scenarios:                      100               100
+Successful scenarios:                  0 / 100          99 / 100
+Success rate:                             0.0%             99.0%
+Mean final distance:                  0.554076          0.043853
+Median final distance:                0.515480          0.039828
+Mean episode return:                  4.844446         27.485413
+Mean episode length:                    35.00             17.72
+```
+
+The total interaction budget and minibatch optimizer steps both increased by a factor of 32. On the identical evaluation scenarios, success rate increased by 99 percentage points, mean final distance decreased by 92.09%, and mean episode return increased by 22.640968. The current configuration therefore performed substantially better on this evaluation set.
+
+All 45 scenarios starting below the target y-coordinate succeeded, as did all 46 scenarios with an initial absolute object y-offset above 0.15. One of the 55 scenarios starting at or above the target y-coordinate failed.
+
+Replaying all 100 scenarios reproduced the saved evaluation results. Two scenarios used to illustrate the earlier policy's failure now succeeded:
+
+```text
+Scenario      Earlier final distance      Current final distance      Current steps
+10005                      0.527752                    0.033783                 19
+10081                      0.984388                    0.044092                 19
+```
+
+The remaining failure, scenario 10069, first made contact at step 2 and reached its minimum target distance of 0.075941 at step 17. It then passed the target and moved to the right boundary at x=1. The episode ended at the 35-step limit with final distance 0.250233.
+
+Training performance also improved during the run:
+
+```text
+Collected transitions      Mean return of the latest 100 training episodes
+65,536                                                           -11.249796
+393,216                                                            7.932620
+655,360                                                           21.234739
+```
+
+These training returns include exploratory action sampling. They are distinct from the final deterministic evaluation metrics above.
+
+The trained parameters changed, and reloading the saved model reproduced them. The earlier PPO checkpoint and original policy-gradient checkpoint were preserved.
+
+#### Diagnosis
+
+The earlier 0% success rate did not mean that the policy had learned nothing. Every earlier evaluation scenario reached and moved the object, reducing mean target distance from about 1.009478 initially to 0.554076 finally. The missing behavior was reliable directional control and final convergence to the goal.
+
+Additional interactions provide more opportunities to encounter different states, try actions, and observe their subsequent rewards. More near-goal and successful experience can help PPO learn which actions improve on its current expectations and refine the final part of the task. As the policy improves, its later training data may also contain more useful near-goal trajectories. These are plausible learning mechanisms, not separately measured causal contributions in this experiment.
+
+The larger rollout collects experience from more independently reset environments before optimization. This may reduce reliance on a few trajectories when forming an update. However, environment count, rollout size, total interactions, and total optimizer steps all changed together; this experiment does not isolate their individual effects. The result supports insufficient learning under the earlier configuration as a plausible explanation, rather than proving that interaction count alone caused the improvement.
+
+Success rate also has a threshold: an episode succeeds only when object-target distance is below 0.07. Continuous improvements in control can move many scenarios across that threshold and produce a large increase in measured success rate. Scenario 10069 illustrates the distinction: its minimum distance of 0.075941 was close to the threshold but still counted as failure. The 92.09% reduction in mean final distance confirms a substantial improvement in physical task performance as well as in the binary success metric.
+
+The remaining failure is consistent with overshooting near the goal and failing to recover before the time limit. Its underlying cause has not been isolated.
+
+#### Note
+
+The original policy-gradient loop also has an interaction budget. Its current configuration implies:
+
+```text
+256 environments × 35 steps × 1,000 iterations = 8,960,000 nominal transitions
+```
+
+This nominal count is about 13.67 times the current PPO budget. It includes padded steps after early success, during which the old loop applies zero actions and masks rewards. The saved original checkpoint contains weights rather than an actual interaction counter, so its historical completed budget is not confirmed by this calculation. In the PPO environment, completed episodes reset and collection continues; 256 collection steps can span several episodes, each still limited to 35 steps.
+
+The 32-fold budget increase in the before/after comparison refers to the two PPO runs, not to the original policy-gradient algorithm. A matched-budget experiment would be needed to separate environment-count effects from additional training. One training seed does not establish reliability across seeds, and the earlier SAC result used a different training budget. The completed PPO experiment demonstrates 99% success on this fixed evaluation set without establishing a general ranking of the algorithms.

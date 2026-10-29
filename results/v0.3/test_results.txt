@@ -1,0 +1,35 @@
+test_action_is_clipped_to_physical_limits (test_gym_env.RobotPushingEnvTests.test_action_is_clipped_to_physical_limits) ... ok
+test_contact_moves_object_by_point_nine_times_action (test_gym_env.RobotPushingEnvTests.test_contact_moves_object_by_point_nine_times_action) ... ok
+test_contact_uses_gripper_position_after_action (test_gym_env.RobotPushingEnvTests.test_contact_uses_gripper_position_after_action) ... ok
+test_environment_rng_isolation (test_gym_env.RobotPushingEnvTests.test_environment_rng_isolation) ... ok
+test_fresh_environment_can_reset_without_seed (test_gym_env.RobotPushingEnvTests.test_fresh_environment_can_reset_without_seed) ... ok
+test_gripper_and_object_are_clipped_to_workspace (test_gym_env.RobotPushingEnvTests.test_gripper_and_object_are_clipped_to_workspace) ... ok
+test_info_distances_match_observation (test_gym_env.RobotPushingEnvTests.test_info_distances_match_observation) ... ok
+test_invalid_actions_are_rejected_before_state_changes (test_gym_env.RobotPushingEnvTests.test_invalid_actions_are_rejected_before_state_changes) ... ok
+test_normalized_wrapper_preserves_physical_action (test_gym_env.RobotPushingEnvTests.test_normalized_wrapper_preserves_physical_action) ... ok
+test_observation_does_not_alias_internal_state (test_gym_env.RobotPushingEnvTests.test_observation_does_not_alias_internal_state) ... ok
+test_random_rollouts_are_finite_and_within_bounds (test_gym_env.RobotPushingEnvTests.test_random_rollouts_are_finite_and_within_bounds) ... ok
+test_reaching_moves_gripper_without_moving_distant_object (test_gym_env.RobotPushingEnvTests.test_reaching_moves_gripper_without_moving_distant_object) ... ok
+test_reset_and_step_contract (test_gym_env.RobotPushingEnvTests.test_reset_and_step_contract) ... ok
+test_reset_clears_episode_counter (test_gym_env.RobotPushingEnvTests.test_reset_clears_episode_counter) ... ok
+test_reset_preserves_global_rngs (test_gym_env.RobotPushingEnvTests.test_reset_preserves_global_rngs) ... ok
+test_reset_sampling_ranges_and_tensor_dtypes (test_gym_env.RobotPushingEnvTests.test_reset_sampling_ranges_and_tensor_dtypes) ... ok
+test_reward_equals_sum_of_reported_components (test_gym_env.RobotPushingEnvTests.test_reward_equals_sum_of_reported_components) ... ok
+test_same_seed_and_actions_reproduce_full_trajectory (test_gym_env.RobotPushingEnvTests.test_same_seed_and_actions_reproduce_full_trajectory) ... ok
+test_seed_reproduces_initial_state (test_gym_env.RobotPushingEnvTests.test_seed_reproduces_initial_state) ... ok
+test_step_requires_reset (test_gym_env.RobotPushingEnvTests.test_step_requires_reset) ... ok
+test_success_on_last_step_preserves_termination (test_gym_env.RobotPushingEnvTests.test_success_on_last_step_preserves_termination) ... ok
+test_success_terminates_and_awards_success_bonus (test_gym_env.RobotPushingEnvTests.test_success_terminates_and_awards_success_bonus) ... ok
+test_success_threshold (test_gym_env.RobotPushingEnvTests.test_success_threshold) ... ok
+test_targeted_and_normal_sampling_modes (test_gym_env.RobotPushingEnvTests.test_targeted_and_normal_sampling_modes) ... ok
+test_toward_goal_beats_away_and_pushing_reward_has_correct_sign (test_gym_env.RobotPushingEnvTests.test_toward_goal_beats_away_and_pushing_reward_has_correct_sign) ... ok
+test_unseeded_resets_advance_and_replay (test_gym_env.RobotPushingEnvTests.test_unseeded_resets_advance_and_replay) ... ok
+test_unsuccessful_episode_truncates_at_limit (test_gym_env.RobotPushingEnvTests.test_unsuccessful_episode_truncates_at_limit) ... ok
+test_vertical_motion_stays_in_observation_space (test_gym_env.RobotPushingEnvTests.test_vertical_motion_stays_in_observation_space) ... ok
+test_y_correction_reward_has_correct_sign (test_gym_env.RobotPushingEnvTests.test_y_correction_reward_has_correct_sign) ... ok
+test_zero_action_preserves_positions (test_gym_env.RobotPushingEnvTests.test_zero_action_preserves_positions) ... ok
+
+----------------------------------------------------------------------
+Ran 30 tests in 0.208s
+
+OK

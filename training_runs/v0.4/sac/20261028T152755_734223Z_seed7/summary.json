@@ -1,0 +1,23 @@
+{
+  "algorithm": "SAC",
+  "implementation": "stable-baselines3",
+  "training_seed": 7,
+  "actual_timesteps": 20480,
+  "training_seconds": 84.41431645862758,
+  "optimizer_updates": 19480,
+  "parameters_changed": true,
+  "saved_model_reload_verified": true,
+  "evaluation": {
+    "episodes": 100,
+    "first_seed": 10000,
+    "distribution": "Current Gymnasium reset mixture: 50% targeted branch, 50% uniform branch.",
+    "deterministic_actions": true,
+    "success_count": 100,
+    "success_rate": 1.0,
+    "mean_final_distance": 0.04532545270398259,
+    "median_final_distance": 0.045049697160720825,
+    "mean_episode_return": 27.41174269724637,
+    "mean_episode_length": 17.99
+  },
+  "interpretation": "One initial run with fixed hyperparameters; no multi-seed comparison or tuning."
+}

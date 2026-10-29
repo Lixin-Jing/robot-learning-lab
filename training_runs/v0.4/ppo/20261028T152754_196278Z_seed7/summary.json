@@ -1,0 +1,23 @@
+{
+  "algorithm": "PPO",
+  "implementation": "stable-baselines3",
+  "training_seed": 7,
+  "actual_timesteps": 20480,
+  "training_seconds": 14.590958708897233,
+  "optimizer_updates": 800,
+  "parameters_changed": true,
+  "saved_model_reload_verified": true,
+  "evaluation": {
+    "episodes": 100,
+    "first_seed": 10000,
+    "distribution": "Current Gymnasium reset mixture: 50% targeted branch, 50% uniform branch.",
+    "deterministic_actions": true,
+    "success_count": 0,
+    "success_rate": 0.0,
+    "mean_final_distance": 0.5540757027268409,
+    "median_final_distance": 0.515479564666748,
+    "mean_episode_return": 4.844445593411802,
+    "mean_episode_length": 35.0
+  },
+  "interpretation": "One initial run with fixed hyperparameters; no multi-seed comparison or tuning."
+}

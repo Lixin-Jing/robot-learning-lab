@@ -1,0 +1,456 @@
+{
+  "episodes": 100,
+  "total_steps": 3500,
+  "original_evaluation_reproduced": true,
+  "success_count": 0,
+  "timeout_count": 100,
+  "episodes_with_contact": 100,
+  "episodes_with_object_motion": 100,
+  "failure_categories": {
+    "partial_progress_without_success": 61,
+    "progress_then_regression": 39
+  },
+  "initial_distance": {
+    "mean": 1.0094776064157487,
+    "median": 1.0105518698692322,
+    "min": 0.9048604965209961,
+    "max": 1.1179980039596558
+  },
+  "final_distance": {
+    "mean": 0.5540757027268409,
+    "median": 0.515479564666748,
+    "min": 0.4067385494709015,
+    "max": 0.9843875169754028
+  },
+  "episode_return": {
+    "mean": 4.844445593411802,
+    "median": 5.859016481786966,
+    "min": -6.84221576154232,
+    "max": 11.09964294359088
+  },
+  "first_contact_step": {
+    "mean": 4.52,
+    "median": 5.0,
+    "min": 2.0,
+    "max": 7.0
+  },
+  "contact_steps": {
+    "mean": 31.05,
+    "median": 31.0,
+    "min": 23.0,
+    "max": 34.0
+  },
+  "contact_loss_events": {
+    "mean": 0.35,
+    "median": 0.0,
+    "min": 0.0,
+    "max": 9.0
+  },
+  "object_path_length": {
+    "mean": 0.7621165853701086,
+    "median": 0.7575724846392404,
+    "min": 0.5555256761126657,
+    "max": 1.0150229830760509
+  },
+  "goal_distance_reduction": {
+    "mean": 0.45540190368890765,
+    "median": 0.47930921614170074,
+    "min": 0.121956467628479,
+    "max": 0.6559029817581177
+  },
+  "initial_abs_y_error": {
+    "mean": 0.14346954510081558,
+    "median": 0.14528697729110718,
+    "min": 0.005450174678117037,
+    "max": 0.24877488613128662
+  },
+  "final_abs_y_error": {
+    "mean": 0.35104192774742843,
+    "median": 0.31780150532722473,
+    "min": 0.011706613935530186,
+    "max": 0.8888429999351501
+  },
+  "episodes_with_worse_abs_y": 83,
+  "episodes_with_negative_final_y": 91,
+  "episodes_with_last_five_regression": 85,
+  "signed_y_groups": {
+    "positive_initial_y": {
+      "count": 55,
+      "mean_initial_y": 0.14751426195725797,
+      "mean_final_y": -0.1585934586145661,
+      "episodes_with_worse_abs_y": 38
+    },
+    "negative_initial_y": {
+      "count": 45,
+      "mean_initial_y": -0.1385260022762749,
+      "mean_final_y": -0.531170708934466,
+      "episodes_with_worse_abs_y": 45
+    }
+  },
+  "last_five_goal_progress": {
+    "mean": -0.002445826828479767,
+    "median": -0.002797037363052368,
+    "min": -0.005775153636932373,
+    "max": 0.0014264583587646484
+  },
+  "last_five_object_motion": {
+    "mean": 0.004585636610877373,
+    "median": 0.004762652446515858,
+    "min": 0.0,
+    "max": 0.007617155788466334
+  },
+  "mean_action_clipped_steps": 853,
+  "mean_action_clipped_fraction": 0.24371428571428572,
+  "mean_gaussian_sample_clip_probability_x": 0.4399875773702349,
+  "mean_gaussian_sample_clip_probability_y": 0.23232209805931364,
+  "sample_clip_probability_scope": "Analytic Gaussian tail probabilities at states on deterministic evaluation paths, not measured training action frequencies.",
+  "mean_moving_direction_alignment": 0.05207679584260952,
+  "reward_components_mean_episode_sum": {
+    "reaching_reward": 1.417755720615387,
+    "pre_push_positioning_reward": 0.6327109707891941,
+    "pushing_reward": 5.464822844266892,
+    "directional_pushing_reward": 4.05416962292723,
+    "y_correction_reward": -0.8302895305678248,
+    "object_goal_reward": -6.602733118310571,
+    "success_pushing_reward": 0.0,
+    "reach_object_reward": -0.145300035784021,
+    "contact_reward": 0.3550000052899122,
+    "success_reaching_reward": 0.5,
+    "action_penalty": -0.00169072397448337
+  },
+  "y_offset_buckets": {
+    "abs_y <= 0.05": {
+      "count": 9,
+      "success_count": 0,
+      "contact_count": 9,
+      "mean_final_distance": 0.5240425732400682
+    },
+    "0.05 < abs_y <= 0.10": {
+      "count": 10,
+      "success_count": 0,
+      "contact_count": 10,
+      "mean_final_distance": 0.5246960312128067
+    },
+    "0.10 < abs_y <= 0.15": {
+      "count": 35,
+      "success_count": 0,
+      "contact_count": 35,
+      "mean_final_distance": 0.5544905253819057
+    },
+    "abs_y > 0.15": {
+      "count": 46,
+      "success_count": 0,
+      "contact_count": 46,
+      "mean_final_distance": 0.5660230089788851
+    }
+  },
+  "per_step_means": [
+    {
+      "step": 1,
+      "mean_object_target_distance": 1.0094776064157487,
+      "mean_normalized_action_x": 1.0,
+      "mean_normalized_action_y": 0.36963381364941594,
+      "mean_object_y": 0.01879614305216819,
+      "mean_object_motion": 0.0
+    },
+    {
+      "step": 2,
+      "mean_object_target_distance": 1.0066876608133315,
+      "mean_normalized_action_x": 1.0,
+      "mean_normalized_action_y": 0.215753643498756,
+      "mean_object_y": 0.019822497111745177,
+      "mean_object_motion": 0.003281490579247475
+    },
+    {
+      "step": 3,
+      "mean_object_target_distance": 0.9929327768087387,
+      "mean_normalized_action_x": 1.0,
+      "mean_normalized_action_y": 0.10087543569039553,
+      "mean_object_y": 0.020193767906166612,
+      "mean_object_motion": 0.015448690578341483
+    },
+    {
+      "step": 4,
+      "mean_object_target_distance": 0.9592620766162873,
+      "mean_normalized_action_x": 1.0,
+      "mean_normalized_action_y": 0.00580421797465533,
+      "mean_object_y": 0.019549046573229135,
+      "mean_object_motion": 0.03707477562129498
+    },
+    {
+      "step": 5,
+      "mean_object_target_distance": 0.9048359543085098,
+      "mean_normalized_action_x": 1.0,
+      "mean_normalized_action_y": -0.0923802860127762,
+      "mean_object_y": 0.012588930702768265,
+      "mean_object_motion": 0.05890164092183113
+    },
+    {
+      "step": 6,
+      "mean_object_target_distance": 0.838900837302208,
+      "mean_normalized_action_x": 1.0,
+      "mean_normalized_action_y": -0.18325368527788669,
+      "mean_object_y": -0.0002082861540839076,
+      "mean_object_motion": 0.07156309209764004
+    },
+    {
+      "step": 7,
+      "mean_object_target_distance": 0.7709426683187485,
+      "mean_normalized_action_x": 0.9975924748182297,
+      "mean_normalized_action_y": -0.25383782263845206,
+      "mean_object_y": -0.018484609774313866,
+      "mean_object_motion": 0.07495766207575798
+    },
+    {
+      "step": 8,
+      "mean_object_target_distance": 0.7054807955026626,
+      "mean_normalized_action_x": 0.977627598643303,
+      "mean_normalized_action_y": -0.3137773294048384,
+      "mean_object_y": -0.04107657666318119,
+      "mean_object_motion": 0.0744550259411335
+    },
+    {
+      "step": 9,
+      "mean_object_target_distance": 0.6469073563814163,
+      "mean_normalized_action_x": 0.901280223429203,
+      "mean_normalized_action_y": -0.3598037251085043,
+      "mean_object_y": -0.06698244457133114,
+      "mean_object_motion": 0.0702882356569171
+    },
+    {
+      "step": 10,
+      "mean_object_target_distance": 0.5998379981517792,
+      "mean_normalized_action_x": 0.7615698710083961,
+      "mean_normalized_action_y": -0.3879235126264393,
+      "mean_object_y": -0.09491293627768754,
+      "mean_object_motion": 0.062002374641597274
+    },
+    {
+      "step": 11,
+      "mean_object_target_distance": 0.5671754604578019,
+      "mean_normalized_action_x": 0.5885530543327332,
+      "mean_normalized_action_y": -0.39490630965679885,
+      "mean_object_y": -0.12301727380603551,
+      "mean_object_motion": 0.050788324791938066
+    },
+    {
+      "step": 12,
+      "mean_object_target_distance": 0.5461520090699196,
+      "mean_normalized_action_x": 0.43604534342885015,
+      "mean_normalized_action_y": -0.3795766472071409,
+      "mean_object_y": -0.1501832140237093,
+      "mean_object_motion": 0.04162323991768062
+    },
+    {
+      "step": 13,
+      "mean_object_target_distance": 0.5337327596545219,
+      "mean_normalized_action_x": 0.32238692507147787,
+      "mean_normalized_action_y": -0.3520122827589512,
+      "mean_object_y": -0.17531145503744483,
+      "mean_object_motion": 0.034286952568218114
+    },
+    {
+      "step": 14,
+      "mean_object_target_distance": 0.5276271471381188,
+      "mean_normalized_action_x": 0.23830115295946597,
+      "mean_normalized_action_y": -0.31751717954874037,
+      "mean_object_y": -0.19772434901446104,
+      "mean_object_motion": 0.028097117068246007
+    },
+    {
+      "step": 15,
+      "mean_object_target_distance": 0.525451835989952,
+      "mean_normalized_action_x": 0.17614156484603882,
+      "mean_normalized_action_y": -0.2794757700711489,
+      "mean_object_y": -0.2173450893815607,
+      "mean_object_motion": 0.02325212978757918
+    },
+    {
+      "step": 16,
+      "mean_object_target_distance": 0.5255756354331971,
+      "mean_normalized_action_x": 0.1303375767916441,
+      "mean_normalized_action_y": -0.24200260173529387,
+      "mean_object_y": -0.23441056100651622,
+      "mean_object_motion": 0.019457946931943297
+    },
+    {
+      "step": 17,
+      "mean_object_target_distance": 0.5270695409178734,
+      "mean_normalized_action_x": 0.09675255335867405,
+      "mean_normalized_action_y": -0.20790632653981447,
+      "mean_object_y": -0.2493798169028014,
+      "mean_object_motion": 0.016562194349244237
+    },
+    {
+      "step": 18,
+      "mean_object_target_distance": 0.5293669536709785,
+      "mean_normalized_action_x": 0.07236936526373029,
+      "mean_normalized_action_y": -0.17916102960705757,
+      "mean_object_y": -0.26212958781048656,
+      "mean_object_motion": 0.01378243742045015
+    },
+    {
+      "step": 19,
+      "mean_object_target_distance": 0.532062329351902,
+      "mean_normalized_action_x": 0.054177493155002594,
+      "mean_normalized_action_y": -0.15238318521529437,
+      "mean_object_y": -0.27298571282066403,
+      "mean_object_motion": 0.011536111058667302
+    },
+    {
+      "step": 20,
+      "mean_object_target_distance": 0.5348491975665093,
+      "mean_normalized_action_x": 0.04071518912911415,
+      "mean_normalized_action_y": -0.12899074317887427,
+      "mean_object_y": -0.2822147171664983,
+      "mean_object_motion": 0.009686445493716746
+    },
+    {
+      "step": 21,
+      "mean_object_target_distance": 0.5374915301799774,
+      "mean_normalized_action_x": 0.030759611632674932,
+      "mean_normalized_action_y": -0.10896790174767375,
+      "mean_object_y": -0.28991332217119636,
+      "mean_object_motion": 0.008004560708068311
+    },
+    {
+      "step": 22,
+      "mean_object_target_distance": 0.5399651327729225,
+      "mean_normalized_action_x": 0.02322972897440195,
+      "mean_normalized_action_y": -0.09109448252245783,
+      "mean_object_y": -0.2963870744314045,
+      "mean_object_motion": 0.006687534815864637
+    },
+    {
+      "step": 23,
+      "mean_object_target_distance": 0.5422232317924499,
+      "mean_normalized_action_x": 0.017643668986856938,
+      "mean_normalized_action_y": -0.0761602338636294,
+      "mean_object_y": -0.30181860357988627,
+      "mean_object_motion": 0.0055746009069844145
+    },
+    {
+      "step": 24,
+      "mean_object_target_distance": 0.5442133194208145,
+      "mean_normalized_action_x": 0.013477328047156335,
+      "mean_normalized_action_y": -0.06363791006617248,
+      "mean_object_y": -0.3063899893849157,
+      "mean_object_motion": 0.004676313363597728
+    },
+    {
+      "step": 25,
+      "mean_object_target_distance": 0.5459565365314484,
+      "mean_normalized_action_x": 0.010375392474234104,
+      "mean_normalized_action_y": -0.05327362430747598,
+      "mean_object_y": -0.3102215541503392,
+      "mean_object_motion": 0.003905678762239404
+    },
+    {
+      "step": 26,
+      "mean_object_target_distance": 0.5474748799204826,
+      "mean_normalized_action_x": 0.00802853837609291,
+      "mean_normalized_action_y": -0.04454441086854786,
+      "mean_object_y": -0.31341798721579833,
+      "mean_object_motion": 0.00324809773999732
+    },
+    {
+      "step": 27,
+      "mean_object_target_distance": 0.5487757036089898,
+      "mean_normalized_action_x": 0.006231728717684746,
+      "mean_normalized_action_y": -0.037138255089521406,
+      "mean_object_y": -0.3160919414879754,
+      "mean_object_motion": 0.0027130257435055683
+    },
+    {
+      "step": 28,
+      "mean_object_target_distance": 0.5498891630768776,
+      "mean_normalized_action_x": 0.004867970645427704,
+      "mean_normalized_action_y": -0.03097942393273115,
+      "mean_object_y": -0.3183214042475447,
+      "mean_object_motion": 0.0022573770954477366
+    },
+    {
+      "step": 29,
+      "mean_object_target_distance": 0.5508289852738381,
+      "mean_normalized_action_x": 0.003817877732217312,
+      "mean_normalized_action_y": -0.025804532654583455,
+      "mean_object_y": -0.32016685999929906,
+      "mean_object_motion": 0.0018662349277292379
+    },
+    {
+      "step": 30,
+      "mean_object_target_distance": 0.5516298758983612,
+      "mean_normalized_action_x": 0.0029939835891127585,
+      "mean_normalized_action_y": -0.021397898690775036,
+      "mean_object_y": -0.32170365705154835,
+      "mean_object_motion": 0.0015516371943522244
+    },
+    {
+      "step": 31,
+      "mean_object_target_distance": 0.5523022121191025,
+      "mean_normalized_action_x": 0.002363831363618374,
+      "mean_normalized_action_y": -0.01776920612435788,
+      "mean_object_y": -0.322979175997898,
+      "mean_object_motion": 0.0012871722963791398
+    },
+    {
+      "step": 32,
+      "mean_object_target_distance": 0.5528680950403213,
+      "mean_normalized_action_x": 0.0018726723268628121,
+      "mean_normalized_action_y": -0.014740670449100435,
+      "mean_object_y": -0.3240388867072761,
+      "mean_object_motion": 0.0010684852084887097
+    },
+    {
+      "step": 33,
+      "mean_object_target_distance": 0.5533440896868705,
+      "mean_normalized_action_x": 0.0014905779436230658,
+      "mean_normalized_action_y": -0.01223032563459128,
+      "mean_object_y": -0.32491786723025146,
+      "mean_object_motion": 0.0008854642934693402
+    },
+    {
+      "step": 34,
+      "mean_object_target_distance": 0.5537424352765083,
+      "mean_normalized_action_x": 0.0011901223286986352,
+      "mean_normalized_action_y": -0.01013991448096931,
+      "mean_object_y": -0.325647757044062,
+      "mean_object_motion": 0.0007350606068530397
+    },
+    {
+      "step": 35,
+      "mean_object_target_distance": 0.5540757027268409,
+      "mean_normalized_action_x": 0.0009545008465647697,
+      "mean_normalized_action_y": -0.008410055576823651,
+      "mean_object_y": -0.3262532212585211,
+      "mean_object_motion": 0.0006094542056871433
+    }
+  ],
+  "classification_rules": {
+    "no_contact": "No active contact at the engine's contact-test instant.",
+    "contact_without_object_motion": "Contact occurred but summed object displacement was below 1e-5.",
+    "net_motion_away_from_goal": "Final distance exceeds initial distance by over 0.01.",
+    "progress_then_regression": "After earlier rules, final distance exceeds best distance by over 0.05.",
+    "partial_progress_without_success": "Other failures with contact and object motion; inspect continuous metrics rather than treating this heuristic label as a cause."
+  },
+  "training_performed": false,
+  "original_run": "/Users/jing/Local_Project/Robot_learning/training_runs/v0.4/ppo/20261028T152754_196278Z_seed7",
+  "model_sha256": "087a03d3cc46111215a7cc9fd7866731398a92392073c8b7db254c6f5c749075",
+  "model_parameters_unchanged": true,
+  "diagnostic_source_sha256": "8868d356d05a9096a731b3b28bf297132c92d0ad9e9d1177afa10fe62b455e45",
+  "created_at_utc": "2026-10-28T22:51:52.192006+00:00",
+  "source_sha256": {
+    "env.py": "414ff96047e15d695729fae2ce6e0c008072fce1f9bf672f553352450397d32a",
+    "gym_env.py": "d559ff52366b6ca08ab876a7f6e8aa7387f09d06eae2e864d456ee1b7273a7ff",
+    "baseline_training.py": "45c7f62b3678bd8300eac78bc4038ab9207eda802acb7d0b997a35bcf3d3e3e8",
+    "train_ppo.py": "d43f9b1b635b1fafd60247bbbfe03197ec0ecfaab14bf387d5198a497c53f305"
+  },
+  "plotted_seeds": [
+    10005,
+    10059,
+    10047,
+    10011,
+    10038,
+    10081
+  ]
+}

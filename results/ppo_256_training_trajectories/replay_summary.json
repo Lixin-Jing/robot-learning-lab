@@ -1,0 +1,27 @@
+{
+  "training_run": "/Users/jing/Local_Project/Robot_learning/training_runs/v0.4/ppo/20261029T005032_984643Z_seed7",
+  "replayed_episodes": 100,
+  "replayed_steps": 1772,
+  "saved_evaluation_reproduced": true,
+  "success_count": 99,
+  "selected_scenarios": {
+    "10005": {
+      "success": true,
+      "steps": 19,
+      "final_distance": 0.03378348425030708,
+      "first_contact": 7
+    },
+    "10081": {
+      "success": true,
+      "steps": 19,
+      "final_distance": 0.044092126190662384,
+      "first_contact": 5
+    },
+    "10069": {
+      "success": false,
+      "steps": 35,
+      "final_distance": 0.2502332031726837,
+      "first_contact": 2
+    }
+  }
+}
