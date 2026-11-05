@@ -1444,3 +1444,187 @@ The original policy-gradient loop also has an interaction budget. Its current co
 This nominal count is about 13.67 times the current PPO budget. It includes padded steps after early success, during which the old loop applies zero actions and masks rewards. The saved original checkpoint contains weights rather than an actual interaction counter, so its historical completed budget is not confirmed by this calculation. In the PPO environment, completed episodes reset and collection continues; 256 collection steps can span several episodes, each still limited to 35 steps.
 
 The 32-fold budget increase in the before/after comparison refers to the two PPO runs, not to the original policy-gradient algorithm. A matched-budget experiment would be needed to separate environment-count effects from additional training. One training seed does not establish reliability across seeds, and the earlier SAC result used a different training budget. The completed PPO experiment demonstrates 99% success on this fixed evaluation set without establishing a general ranking of the algorithms.
+
+
+---
+
+## 2026-09-30
+
+### PPO and SAC with Shared Training Conditions
+
+#### Goal
+
+Complete the v0.4 comparison using repeated training seeds, equal interaction and actor/critic update budgets, the same task and evaluation states, learning curves, and y-offset analysis.
+
+The earlier individual runs established that both algorithms could solve the task, but their environment counts, training schedules, and budgets differed.
+
+#### Change
+
+Trained PPO and SAC with seeds 7, 17, and 27 under the following shared controls:
+
+```text
+Environments per run:                         256
+Collection steps per environment:            256
+New transitions per collection:           65,536
+Collection batches per run:                   10
+Total training transitions per run:      655,360
+Hidden layers:                           64, 64
+Hidden activation:                         Tanh
+Learning rate:                           0.0003
+Discount factor:                           0.97
+Minibatch size:                              64
+Actor/critic optimizer:                    Adam
+Adam epsilon:                          0.00001
+Adam betas:                         (0.9, 0.999)
+Actor/critic update iterations per batch: 10,240
+Actor/critic update iterations per run:  102,400
+```
+
+The observation, normalized and physical action ranges, reward, dynamics, 35-step episode limit, reset distribution, and training reset seeds were shared. For each paired training seed, the first 256 training observations were checked against pre-saved coordinates. Subsequent resets use the same environment-specific random streams, while episode timing naturally depends on each policy's behavior.
+
+PPO optimized each current rollout for 10 epochs. SAC collected the same 256 steps per environment and then performed 10,240 replay gradient iterations with minibatch size 64. SAC used replay capacity 655,360 and started with policy sampling rather than an additional uniform-random warm-up. These are controlled comparison settings, distinct from the earlier single-environment SAC recipe.
+
+Saved 100 initial states for scheduled evaluations at 0 and every 65,536 training interactions. Saved another 300 initial states before training and used them only for final evaluation. All evaluation actions were deterministic. Scheduled evaluations preserved training random-number-generator states and policy mode. Checkpoint evaluation occurred after the corresponding optimizer work.
+
+Each result uses the final model at the prescribed budget. The curves and final evaluation were not used for checkpoint selection, early stopping, or hyperparameter changes.
+
+#### Result
+
+```text
+Algorithm Seed    Fixed curve scenarios    New final scenarios
+PPO       7        99/100              295/300
+PPO       17       98/100              288/300
+PPO       27      100/100              297/300
+SAC       7        98/100              293/300
+SAC       17      100/100              300/300
+SAC       27      100/100              300/300
+```
+
+Final performance, reported as mean +/- sample standard deviation across the three training seeds:
+
+```text
+Fixed 100-scenario success:
+  PPO: 99.00% +/- 1.00 percentage points
+  SAC: 99.33% +/- 1.15 percentage points
+
+New 300-scenario success:
+  PPO: 97.78% +/- 1.58 percentage points
+  SAC: 99.22% +/- 1.35 percentage points
+
+New 300-scenario mean final distance:
+  PPO: 0.047397 +/- 0.002187
+  SAC: 0.042609 +/- 0.005057
+
+New 300-scenario mean episode return:
+  PPO: 27.353423 +/- 0.172141
+  SAC: 27.567092 +/- 0.173440
+```
+
+Relative to PPO under these shared settings, SAC's mean final success rate was 1.44 percentage points higher and its mean final distance was 10.10% lower on the new scenarios.
+
+The first recorded checkpoint with at least 90% success on the fixed 100 scenarios was:
+
+```text
+Seed            PPO interactions       SAC interactions
+7                       589,824                327,680
+17                      589,824                196,608
+27                      524,288                262,144
+Mean                    567,978.67             262,144.00
+```
+
+SAC required 53.85% fewer training interactions on average to reach this observed milestone. Evaluations are spaced 65,536 interactions apart; this measures the first observed qualifying checkpoint rather than an exact minimum sample requirement.
+
+The normalized trapezoidal success-curve area on the common evaluation grid was 0.367500 for PPO and 0.693667 for SAC. The learning curves therefore support an earlier learning advantage for SAC in this experiment.
+
+Final success by initial absolute object y-offset, averaged across seeds:
+
+```text
+Bucket                    Cases per seed    PPO success     SAC success
+abs_y <= 0.05                36               98.15%           99.07%
+0.05 < abs_y <= 0.10         27               96.30%           98.77%
+0.10 < abs_y <= 0.15         69               99.52%           99.03%
+abs_y > 0.15                168               97.22%           99.40%
+```
+
+Both algorithms performed well beyond near-horizontal initial states. For the largest-offset bucket, the three PPO models succeeded in 165, 159, and 166 of 168 cases; SAC succeeded in 165, 168, and 168.
+
+All six runs completed exactly 655,360 training interactions and 102,400 actor/critic update iterations. All saved final models reloaded with matching parameters. PPO seed 7 also reproduced the final parameters of the earlier 256-environment run exactly, providing evidence that the added evaluation schedule did not perturb that training trajectory.
+
+#### Diagnosis
+
+SAC learned successful pushing earlier under the shared collection and update schedule. Its final advantage was much smaller than its early learning advantage: both algorithms finished with high success rates, while SAC's average final success was only 1.44 percentage points above PPO on the new states.
+
+Training stability and final variation across seeds are different measurements. PPO success was nondecreasing at the recorded evaluation points for all three seeds. SAC showed adjacent-checkpoint drops of up to 33, 13, and 63 percentage points for seeds 7, 17, and 27. In seed 27, success changed from 63% to 0% to 95% over consecutive evaluations. A high final score therefore does not imply a smooth training process.
+
+Post-hoc trajectory replay examined SAC seed 7 at 131,072, 458,752, and 655,360 interactions. It reproduced the recorded outcomes. At the 458,752-interaction checkpoint, 20 of the 34 failed cases came within 0.10 of the goal but did not cross the 0.07 success threshold. None of the evaluated cases ended at the right boundary or regressed by more than 0.05 from their best distance at these selected checkpoints. This localizes much of that observed drop to incomplete goal convergence rather than boundary overshoot, without identifying the underlying optimization cause.
+
+The final y-offset results show that large initial lateral offsets are no longer a general failure region for either configuration. Remaining failures are limited and depend on the trained seed and individual initial state; they should not be inferred from average return alone.
+
+#### Note
+
+Shared experimental controls match, while the implemented algorithms retain their distinct objectives and policy/critic parameterizations: PPO uses a clipped on-policy objective and a state-value critic; SAC uses replay, twin Q critics, target networks, and entropy-temperature learning. Policy output distributions, policy-class initialization, and algorithm-default gradient handling remain those of the respective SB3 implementations. Equal actor/critic update counts do not imply equal parameter counts, FLOPs, or total optimizer work, since SAC also updates its temperature.
+
+The 300 final states are new samples from the same task distribution, not a domain-shift experiment. Standard deviations describe three training seeds and are not confidence intervals over a broad task population. These results compare the stated configurations rather than each algorithm's best possible tuning.
+
+The v0.4 baseline comparison is complete for the current task. It provides the pure-RL reference for the next Behavior Cloning and RL fine-tuning experiments.
+
+## 2026-10-02
+### SAC Training Regressions and Related Research
+
+#### Goal
+
+Explain the temporary performance regressions observed during the matched PPO/SAC experiment, separating measured changes in policy behavior from plausible learning mechanisms described in the literature.
+
+#### Change
+
+Compared the same evaluation scenarios before and after the SAC regressions, including case-by-case final distances for seed 27. Reviewed primary papers on training reliability, actor-critic approximation error, experience replay, and the SAC objective. This analysis used existing records and checkpoints; no additional training or parameter changes were performed.
+
+#### Result
+
+Two different effects were observed.
+
+For seed 7, success fell from 99% at 393,216 interactions to 66% at 458,752. Mean final distance increased from 0.048203 to 0.068790. The earlier trajectory replay showed that 20 of the 34 failed scenarios reached within 0.10 of the target but did not satisfy the 0.07 success threshold. This supports threshold amplification of near-goal control errors in part of that decline.
+
+For seed 27, success fell from 63% at 131,072 interactions to 0% at 196,608. Pairing the identical scenarios revealed a substantial regression in the previously successful cases:
+
+```text
+Scenario group               Count     Mean final distance before / after
+Previously successful           63     0.052582 / 0.180148
+Previously failed               37     0.424461 / 0.180106
+```
+
+Overall mean final distance improved slightly, from 0.190177 to 0.180132, because the previously difficult cases improved while the previously successful cases became worse. No scenario succeeded after the update block. This is a real change in task-completing behavior, not merely a small change around the success threshold.
+
+Evaluation states were fixed and actions deterministic. The observed declines therefore correspond to differences between trained policies, rather than newly sampled evaluation cases.
+
+The seed 7 decline was not accompanied by an obvious explosion in the logged average critic loss: it changed from approximately 0.077024 to 0.078129. Its logged average entropy coefficient changed from approximately 0.041809 to 0.039536. These observations do not establish critic divergence or an abrupt entropy-temperature change as the cause.
+
+#### Diagnosis
+
+**Training reliability and performance are separate measurements.** Chan et al., *Measuring the Reliability of Reinforcement Learning Algorithms*, ICLR 2020, distinguish variability within a training run, variability across runs, and reliability after learning. They also measure performance drawdowns relative to earlier peaks. This directly supports describing our observed declines as training-time reliability issues even when final success is high. It does not establish that SAC is generally less reliable than PPO. [Paper](https://arxiv.org/abs/1912.05663)
+
+**Critic approximation error can misdirect policy updates.** Fujimoto, van Hoof, and Meger, *Addressing Function Approximation Error in Actor-Critic Methods*, ICML 2018, show how value-estimation errors affect actor-critic learning and motivate clipped double critics and delayed policy updates. In our SAC implementation, the actor follows an objective of the form:
+
+```text
+E[alpha * log pi(a | s) - min(Q1(s, a), Q2(s, a))]
+```
+
+An inaccurate critic can therefore encourage actions that look favorable to the learned estimator but perform poorly in the environment. Twin critics mitigate some errors without making the estimates exact. This is a plausible mechanism for the real regression in seed 27, but Q-value overestimation has not been measured in this project. A small critic training loss alone would not establish accurate values, since its bootstrapped targets also change. [Paper](https://proceedings.mlr.press/v80/fujimoto18a.html)
+
+**Replay and the timing of updates are plausible contributing factors.** Fedus et al., *Revisiting Fundamentals of Experience Replay*, ICML 2020, systematically examine replay capacity, learning-to-data ratios, and the age of replayed experience. Our comparison collects 65,536 new transitions and then performs 10,240 updates without collecting additional experience during that update block. The actor and critic can change substantially before collecting data with the updated policy, while replay also includes older policies' experience. This motivates examining the interaction between replay and concentrated update blocks. The paper studies Q-learning methods and does not prove that our particular SAC schedule caused the regressions. [Paper](https://proceedings.mlr.press/v119/fedus20a.html)
+
+The update-to-data ratio, defined here as gradient-update iterations per new environment transition, is:
+
+```text
+10,240 / 65,536 = 0.15625
+```
+
+The large absolute update count per block should therefore not be taken as evidence of a high update-to-data ratio. The total update ratio and the temporal concentration of those updates are different experimental factors.
+
+**The optimized objective differs from deterministic task success.** Haarnoja et al., *Soft Actor-Critic Algorithms and Applications*, arXiv 1812.05905, submitted 2018 and revised 2019, describe maximum-entropy learning and distinguish exact soft policy iteration from its neural-network approximation. The theoretical policy-iteration result does not establish monotonic improvement of our finite-sample deterministic success metric. Our shaped reward, entropy objective, 35-step time limit, and distance-based success decision can respond differently to a policy update. The measured temperature changes are insufficient to single out entropy adjustment as the root cause. [Paper](https://arxiv.org/abs/1812.05905)
+
+#### Note
+
+The supported conclusion is that temporary regressions occurred, including both near-threshold failures and substantial deterioration in previously successful cases. Actor-critic estimation and update coupling, replay distribution, and concentrated update timing remain hypotheses. Neither a confirmed critic failure nor catastrophic forgetting has been established.
+
+A focused follow-up would compare actions and Q estimates on identical near-goal states before and after a regression, assess those estimates against suitable rollout-based targets, and then vary the collection/update schedule while preserving total interactions and actor/critic update counts. Those causal interventions have not been run as part of this analysis.

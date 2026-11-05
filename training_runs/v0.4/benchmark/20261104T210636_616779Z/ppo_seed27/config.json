@@ -1,0 +1,33 @@
+{
+  "algorithm": "PPO",
+  "seed": 27,
+  "parameters": {
+    "learning_rate": 0.0003,
+    "gamma": 0.97,
+    "policy_kwargs": {
+      "net_arch": [
+        64,
+        64
+      ],
+      "activation_fn": "Tanh",
+      "optimizer_class": "Adam",
+      "optimizer_kwargs": {
+        "eps": 1e-05,
+        "betas": [
+          0.9,
+          0.999
+        ]
+      }
+    },
+    "seed": 27,
+    "device": "cpu",
+    "verbose": 0,
+    "n_steps": 256,
+    "batch_size": 64,
+    "n_epochs": 10,
+    "gae_lambda": 0.95,
+    "clip_range": 0.2,
+    "ent_coef": 0.0
+  },
+  "protocol": "../protocol.json"
+}

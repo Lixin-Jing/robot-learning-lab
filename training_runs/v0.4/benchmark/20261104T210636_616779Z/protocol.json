@@ -1,0 +1,93 @@
+{
+  "training_seeds": [
+    7,
+    17,
+    27
+  ],
+  "total_transitions_per_run": 655360,
+  "algorithms": [
+    "ppo",
+    "sac"
+  ],
+  "common_evaluation_steps": [
+    0,
+    65536,
+    131072,
+    196608,
+    262144,
+    327680,
+    393216,
+    458752,
+    524288,
+    589824,
+    655360
+  ],
+  "shared_network": {
+    "hidden_layers": [
+      64,
+      64
+    ],
+    "activation": "Tanh"
+  },
+  "shared_minibatch_size": 64,
+  "shared_learning_rate": 0.0003,
+  "shared_optimizer": {
+    "class": "Adam",
+    "eps": 1e-05,
+    "betas": [
+      0.9,
+      0.999
+    ]
+  },
+  "shared_new_transitions_per_collection": 65536,
+  "shared_actor_critic_updates_per_collection": 10240,
+  "ppo_environments": 256,
+  "ppo_steps_per_environment": 256,
+  "sac_environments": 256,
+  "sac_steps_per_environment": 256,
+  "torch_threads_per_process": 1,
+  "curve_scenarios": 100,
+  "holdout_scenarios": 300,
+  "deterministic_evaluation": true,
+  "checkpoint_selection": "Final prescribed-budget checkpoint only; no tuning or early stopping.",
+  "comparison_scope": "Matched environment count, observations, actions, task, initial RNG streams, interactions, collection schedule, hidden layers, activation, minibatch size, Adam settings, and actor/critic update counts. Algorithm-specific objectives, critic structure, replay, target networks, and entropy mechanisms differ.",
+  "evaluation_timing": "At common rollout boundaries, evaluate after optimizer updates; final capture follows the last update.",
+  "environment_config": {
+    "num_envs": 256,
+    "episode_steps": 35,
+    "train_iterations": 1000,
+    "learning_rate": 0.0003,
+    "gamma": 0.97,
+    "action_std": 0.05,
+    "action_limit": 0.08,
+    "contact_radius": 0.2,
+    "device": "cpu",
+    "reward_debug_enabled": false,
+    "reward_debug_interval_iterations": 100,
+    "targeted_y_offset_sampling": true,
+    "targeted_y_offset_fraction": 0.5,
+    "targeted_y_offset_min": 0.1,
+    "targeted_y_offset_max": 0.25
+  },
+  "versions": {
+    "torch": "2.10.0",
+    "numpy": "2.4.6",
+    "gymnasium": "1.2.3",
+    "stable-baselines3": "2.9.0"
+  },
+  "source_sha256": {
+    "env.py": "414ff96047e15d695729fae2ce6e0c008072fce1f9bf672f553352450397d32a",
+    "gym_env.py": "d559ff52366b6ca08ab876a7f6e8aa7387f09d06eae2e864d456ee1b7273a7ff",
+    "baseline_training.py": "5a3bd221553e1662f6b306a89012393b8ce2036e7b7006e4a99daa0fe20b1f1b",
+    "train_ppo.py": "d43f9b1b635b1fafd60247bbbfe03197ec0ecfaab14bf387d5198a497c53f305",
+    "train_sac.py": "c200558c59e58915131c3bcefea496ba15956dee8b71e8d0c3c52c410d4be6cb",
+    "benchmark_v04.py": "ceb50662c152f61ad084bf6f4edf4d505437650f2ada1daa46f21dcde1801779"
+  },
+  "state_files_sha256": {
+    "curve_initial_states.csv": "0c58a3b38963eb579c618014f2bf71c14252e93f606a0a6dc1463bc121c6f2c1",
+    "holdout_initial_states.csv": "81a06553cc774e238824375708578471b5210c13fca064d0ae53e17579f061b9",
+    "training_initial_states_seed17.csv": "def60e1fb077698e577a7d89dc44f629f85d4cbfa3ea2e13ba100ee9b119a8c3",
+    "training_initial_states_seed27.csv": "f73d2e3fe93c2aa8e2c272c57f8017b09999c131b9f1230ea10d298e5cd0b854",
+    "training_initial_states_seed7.csv": "d98a1d76809b8d0dcb51feed99460839bca2fb7cb1dfcb1545ac6fd1a7ed3f13"
+  }
+}

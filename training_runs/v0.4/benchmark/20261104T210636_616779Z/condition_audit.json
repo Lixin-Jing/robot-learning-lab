@@ -1,0 +1,55 @@
+{
+  "paired_configurations": [
+    {
+      "seed": 7,
+      "matched_fields": [
+        "learning_rate",
+        "gamma",
+        "batch_size",
+        "device",
+        "policy_kwargs",
+        "seed",
+        "steps_per_environment_per_collection",
+        "actor_critic_update_count"
+      ],
+      "matched": true
+    },
+    {
+      "seed": 17,
+      "matched_fields": [
+        "learning_rate",
+        "gamma",
+        "batch_size",
+        "device",
+        "policy_kwargs",
+        "seed",
+        "steps_per_environment_per_collection",
+        "actor_critic_update_count"
+      ],
+      "matched": true
+    },
+    {
+      "seed": 27,
+      "matched_fields": [
+        "learning_rate",
+        "gamma",
+        "batch_size",
+        "device",
+        "policy_kwargs",
+        "seed",
+        "steps_per_environment_per_collection",
+        "actor_critic_update_count"
+      ],
+      "matched": true
+    }
+  ],
+  "environments_per_algorithm": 256,
+  "total_transitions_per_run": 655360,
+  "source_snapshots_match_live_training_sources": true,
+  "retained_method_differences": [
+    "PPO clipped policy-gradient objective, state-value critic and on-policy rollout reuse",
+    "SAC entropy-regularized objective, twin Q critics, target networks, temperature optimization and replay sampling",
+    "Policy output distributions, policy-class initialization and algorithm-default gradient handling follow the respective SB3 implementations"
+  ],
+  "scope": "Shared experimental controls match; this does not assert equal model parameter counts, distributions, FLOPs, or identical mathematical algorithms."
+}

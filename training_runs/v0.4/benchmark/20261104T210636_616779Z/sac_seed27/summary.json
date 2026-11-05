@@ -1,0 +1,35 @@
+{
+  "algorithm": "SAC",
+  "training_seed": 27,
+  "actual_timesteps": 655360,
+  "num_envs": 256,
+  "training_seconds_excluding_evaluation_and_checkpoints": 426.58909382950515,
+  "learn_elapsed_seconds": 436.1349867498502,
+  "evaluation_seconds_during_learning": 9.075303043238819,
+  "checkpoint_seconds_during_learning": 0.47058987710624933,
+  "sb3_update_counter": 102400,
+  "ppo_minibatch_optimizer_steps": null,
+  "sac_gradient_updates": 102400,
+  "parameters_changed": true,
+  "saved_model_reload_verified": true,
+  "initial_parameter_sha256": "6dbbafc19a64721767358017d69534f20c7efd8143aa887c17b01e8f1b71ddeb",
+  "final_parameter_sha256": "9c80733304110d05e01b3de04cf117c71ee842d469e96d5c9e108a29b2552f37",
+  "curve_evaluation": {
+    "transitions": 655360,
+    "episodes": 100,
+    "success_count": 100,
+    "success_rate": 1.0,
+    "mean_final_distance": 0.04391772015951574,
+    "mean_episode_return": 27.496290759779512,
+    "mean_episode_length": 17.87
+  },
+  "holdout_evaluation": {
+    "episodes": 300,
+    "success_count": 300,
+    "success_rate": 1.0,
+    "mean_final_distance": 0.045788251892275485,
+    "mean_episode_return": 27.5402663791428,
+    "mean_episode_length": 17.843333333333334
+  },
+  "interpretation": "One preregistered seed; final prescribed-budget model only. Evaluation preserves training RNG and mode."
+}

@@ -1,0 +1,8 @@
+{
+  "platform": "macOS-15.5-arm64-arm-64bit",
+  "logical_cpu_count": 8,
+  "training_device": "cpu",
+  "torch_threads_per_training_process": 1,
+  "execution": "PPO and SAC use separate workers on the same host; seeds run sequentially within each algorithm worker.",
+  "timing_interpretation": "Wall-clock times are recorded descriptively; concurrent execution and algorithm-specific work prevent a matched-FLOP or isolated speed claim."
+}

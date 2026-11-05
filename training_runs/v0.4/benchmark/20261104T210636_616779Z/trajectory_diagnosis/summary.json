@@ -1,0 +1,26 @@
+{
+  "scope": "Post-hoc replay of saved SAC seed7 checkpoints; no retraining or tuning.",
+  "checkpoints": [
+    {
+      "checkpoint": 131072,
+      "success_count": 0,
+      "right_boundary_count": 0,
+      "regression_over_0_05_count": 0,
+      "failed_but_min_distance_below_0_10": 0
+    },
+    {
+      "checkpoint": 458752,
+      "success_count": 66,
+      "right_boundary_count": 0,
+      "regression_over_0_05_count": 0,
+      "failed_but_min_distance_below_0_10": 20
+    },
+    {
+      "checkpoint": 655360,
+      "success_count": 98,
+      "right_boundary_count": 0,
+      "regression_over_0_05_count": 0,
+      "failed_but_min_distance_below_0_10": 2
+    }
+  ]
+}
